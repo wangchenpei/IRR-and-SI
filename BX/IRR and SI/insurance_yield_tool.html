@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>保险演示收益率小工具</title>
+  <!-- 浏览器端读写 xlsx；商用交付前请自行核对 SheetJS 许可证是否适用 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #e9eef5;
+      --panel: #ffffff;
+      --border: #c8d4e4;
+      --text: #1a2433;
+      --muted: #5a6a7d;
+      --accent: #1e5a8a;
+      --accent-soft: #e8f1f9;
+      --ok: #1a6b4a;
+      --radius: 12px;
+      --shadow: 0 10px 36px rgba(26, 36, 51, 0.1);
+      --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: "Cascadia Code", Consolas, "Microsoft YaHei", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      font-size: 15px;
+      color: var(--text);
+      background: linear-gradient(160deg, #dfe6ef, var(--bg));
+    }
+    header.app-head {
+      padding: 14px 22px;
+      background: linear-gradient(90deg, #1a3a52, #2a5a7e);
+      color: #f0f6fc;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    }
+    header.app-head h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+    header.app-head p {
+      margin: 6px 0 0;
+      font-size: 0.82rem;
+      opacity: 0.88;
+    }
+    .shell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      min-height: calc(100vh - 72px);
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .pane {
+      padding: 18px;
+    }
+    .pane-input {
+      flex: 0 0 340px;
+      max-width: 100%;
+      border-right: 1px solid var(--border);
+    }
+    .pane-output {
+      flex: 1 1 480px;
+      min-width: 0;
+    }
+    @media (max-width: 860px) {
+      .pane-input {
+        flex: 1 1 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 0.95rem;
+      color: var(--accent);
+      font-weight: 650;
+    }
+    fieldset.mode-group {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px 10px;
+      margin: 0 0 14px;
+    }
+    fieldset.mode-group legend {
+      padding: 0 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .mode-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .mode-option:last-child {
+      margin-bottom: 0;
+    }
+    .mode-option input {
+      margin-top: 4px;
+      accent-color: var(--accent);
+    }
+    .mode-option span strong {
+      display: block;
+      font-size: 0.92rem;
+    }
+    .mode-option span small {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    #file-input {
+      display: none;
+    }
+    .dropzone {
+      border: 2px dashed #9ab0c8;
+      border-radius: var(--radius);
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--accent-soft);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: #dceaf7;
+      color: var(--text);
+    }
+    .dropzone strong {
+      color: var(--accent);
+    }
+
+    .file-meta {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      word-break: break-all;
+    }
+    .file-meta.ok {
+      color: var(--ok);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button.btn {
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.btn-primary {
+      background: linear-gradient(180deg, #2d6a9e, var(--accent));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(30, 90, 138, 0.35);
+    }
+    button.btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    button.btn-ghost {
+      background: #eef3f8;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .output-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .output-toolbar h2 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: min(62vh, 560px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fafcfe;
+    }
+    table.result {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    table.result thead th {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(180deg, #2a4d6e, #1f3d56);
+      color: #eef6fc;
+      text-align: left;
+      padding: 11px 12px;
+      font-weight: 600;
+      border-bottom: 2px solid #c9a227;
+      white-space: nowrap;
+    }
+    table.result td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #e0e8f0;
+      font-variant-numeric: tabular-nums;
+      font-family: var(--mono);
+    }
+    table.result tbody tr:nth-child(even) {
+      background: #f2f6fb;
+    }
+    table.result tbody tr:hover {
+      background: #e4f0fb;
+    }
+
+    .placeholder-hint {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    footer.next-info {
+      max-width: 1400px;
+      margin: 0 auto 24px;
+      padding: 0 18px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    footer.next-info details {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    footer.next-info summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+    }
+    footer.next-info ul {
+      margin: 8px 0 0 1.1rem;
+      padding: 0;
+    }
+    footer.next-info li {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-head">
+    <h1>保险演示收益率小工具</h1>
+    <p>左侧选择模式并上传演示表 → 右侧展示每年复利 / 单利（当前为框架占位，计算逻辑待接入）</p>
+  </header>
+
+  <div class="shell">
+    <section class="pane pane-input" aria-label="输入区">
+      <div class="card">
+        <h2>演示模式</h2>
+        <fieldset class="mode-group">
+          <legend>请选择一种情形</legend>
+          <label class="mode-option">
+            <input type="radio" name="premium_mode" value="no_premium" checked />
+            <span>
+              <strong>没有保费</strong>
+              <small>占位：具体含义与公式待与您对齐后写入。</small>
+            </span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="premium_mode" value="premium_withdraw" />
+            <span>
+              <strong>有保费提取</strong>
+              <small>占位：含提取时的现金流与收益率口径待定义。</small>
+            </span>
+          </label>
+        </fieldset>
+
+        <h2>保单演示文件</h2>
+        <p style="margin: 0 0 10px; font-size: 0.86rem; color: var(--muted)">
+          请将 Excel（.xlsx / .xls）拖入下方区域，或点击选择文件。
+        </p>
+        <input id="file-input" type="file" accept=".xlsx,.xls" />
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
+          将文件 <strong>拖拽到此处</strong><br />或点击选择
+        </div>
+        <div id="file-meta" class="file-meta" aria-live="polite"></div>
+        <div class="btn-row">
+          <button type="button" id="btn-run" class="btn btn-primary" disabled>重新计算</button>
+          <button type="button" id="btn-clear-file" class="btn btn-ghost">清除文件</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane pane-output" aria-label="输出区">
+      <div class="output-toolbar">
+        <h2>计算结果</h2>
+        <button type="button" id="btn-export" class="btn btn-primary" disabled>导出为 Excel</button>
+      </div>
+      <div class="card" style="margin: 0; padding: 0; overflow: hidden">
+        <div id="table-container" class="table-wrap">
+          <div class="placeholder-hint" id="placeholder">
+            上传演示表并点击「重新计算」后，结果将显示在此处。
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="next-info">
+    <details>
+      <summary>后续细化时，建议您补充的信息</summary>
+      <ul>
+        <li>演示 Excel 的版式：工作表名、保单年度列、现金流 / 现价 / 保费等所在列或表头关键字。</li>
+        <li>「没有保费」与「有保费提取」各自对应的现金流定义与收益率口径（IRR、复利、单利的精确定义）。</li>
+        <li>是否需要客户填写额外参数（如贴现率、提取金额与年份等）及默认值。</li>
+        <li>导出 Excel 的列名、列顺序、是否需要多个工作表。</li>
+        <li>客户环境是否必须离线可用（若不能访问 CDN，需改为本地引入 xlsx 库）。</li>
+      </ul>
+    </details>
+  </footer>
+
+  <script>
+    (function () {
+      var fileInput = document.getElementById("file-input");
+      var dropzone = document.getElementById("dropzone");
+      var fileMeta = document.getElementById("file-meta");
+      var btnRun = document.getElementById("btn-run");
+      var btnClear = document.getElementById("btn-clear-file");
+      var btnExport = document.getElementById("btn-export");
+      var tableContainer = document.getElementById("table-container");
+
+      /** @type {File | null} */
+      var currentFile = null;
+      /** @type {{ sheetNames: string[] } | null} */
+      var lastWorkbookStub = null;
+      /** @type {{ year: string, compound: string, simple: string }[]} */
+      var lastResultRows = [];
+
+      function getPremiumMode() {
+        var el = document.querySelector("input[name=\"premium_mode\"]:checked");
+        return el ? el.value : "no_premium";
+      }
+
+      function setFileMeta(text, ok) {
+        fileMeta.textContent = text;
+        fileMeta.className = "file-meta" + (ok ? " ok" : "");
+      }
+
+      function pickFile() {
+        fileInput.click();
+      }
+
+      function attachFile(file) {
+        if (!file) return;
+        var lower = file.name.toLowerCase();
+        if (lower.indexOf(".xlsx") === -1 && lower.indexOf(".xls") === -1) {
+          setFileMeta("请选择 .xlsx 或 .xls 格式的 Excel 文件。", false);
+          return;
+        }
+        currentFile = file;
+        setFileMeta(
+          "已选择：「" + file.name + "」（" + (file.size / 1024).toFixed(1) + " KB）",
+          true
+        );
+        btnRun.disabled = false;
+      }
+
+      dropzone.addEventListener("click", pickFile);
+      dropzone.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          pickFile();
+        }
+      });
+
+      ["dragenter", "dragover"].forEach(function (ev) {
+        dropzone.addEventListener(ev, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add("dragover");
+        });
+      });
+      ["dragleave", "drop"].forEach(function (ev) {
+        dropzone.addEventListener(ev, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove("dragover");
+        });
+      });
+      dropzone.addEventListener("drop", function (e) {
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        attachFile(f);
+      });
+
+      fileInput.addEventListener("change", function () {
+        var f = fileInput.files && fileInput.files[0];
+        attachFile(f);
+        fileInput.value = "";
+      });
+
+      btnClear.addEventListener("click", function () {
+        currentFile = null;
+        lastWorkbookStub = null;
+        lastResultRows = [];
+        btnRun.disabled = true;
+        btnExport.disabled = true;
+        setFileMeta("", false);
+        renderPlaceholder();
+      });
+
+      function renderPlaceholder() {
+        tableContainer.innerHTML = "";
+        var ph = document.createElement("div");
+        ph.className = "placeholder-hint";
+        ph.id = "placeholder";
+        ph.textContent = "上传演示表并点击「重新计算」后，结果将显示在此处。";
+        tableContainer.appendChild(ph);
+      }
+
+      function readExcelStub(file) {
+        return new Promise(function (resolve, reject) {
+          if (typeof XLSX === "undefined") {
+            reject(
+              new Error("未加载 xlsx 库（可能无网络）。可改为本地放置 xlsx.full.min.js 后引用。")
+            );
+            return;
+          }
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              var data = new Uint8Array(e.target.result);
+              var wb = XLSX.read(data, { type: "array" });
+              lastWorkbookStub = { sheetNames: wb.SheetNames.slice(), wb: wb };
+              resolve();
+            } catch (err) {
+              reject(err);
+            }
+          };
+          reader.onerror = function () {
+            reject(new Error("读取文件失败。"));
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      /** 占位：后续替换为真实每年复利 / 单利 */
+      function computeStubRows() {
+        var mode = getPremiumMode();
+        var n = 5;
+        var rows = [];
+        for (var i = 1; i <= n; i++) {
+          rows.push({
+            year: "第" + i + "年（示例）",
+            compound:
+              mode === "premium_withdraw" ? "—" : (2.5 + i * 0.1).toFixed(2) + "%",
+            simple: (2.2 + i * 0.08).toFixed(2) + "%",
+          });
+        }
+        return rows;
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderTable(rows) {
+        tableContainer.innerHTML = "";
+        var table = document.createElement("table");
+        table.className = "result";
+        table.setAttribute("role", "grid");
+        var thead = document.createElement("thead");
+        thead.innerHTML =
+          "<tr><th>保单年度</th><th>复利（占位）</th><th>单利（占位）</th></tr>";
+        var tbody = document.createElement("tbody");
+        rows.forEach(function (r) {
+          var tr = document.createElement("tr");
+          tr.innerHTML =
+            "<td>" +
+            escapeHtml(r.year) +
+            "</td><td>" +
+            escapeHtml(r.compound) +
+            "</td><td>" +
+            escapeHtml(r.simple) +
+            "</td>";
+          tbody.appendChild(tr);
+        });
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        tableContainer.appendChild(table);
+      }
+
+      btnRun.addEventListener("click", function () {
+        if (!currentFile) return;
+        btnRun.disabled = true;
+        setFileMeta("正在读取…", false);
+        readExcelStub(currentFile)
+          .then(function () {
+            var names = lastWorkbookStub && lastWorkbookStub.sheetNames;
+            var extra = names && names.length ? "；工作表：" + names.join("、") : "";
+            setFileMeta("已读取：「" + currentFile.name + "」" + extra, true);
+            lastResultRows = computeStubRows();
+            renderTable(lastResultRows);
+            btnExport.disabled = lastResultRows.length === 0;
+          })
+          .catch(function (err) {
+            console.error(err);
+            setFileMeta(err.message || String(err), false);
+            renderPlaceholder();
+            btnExport.disabled = true;
+          })
+          .finally(function () {
+            btnRun.disabled = false;
+          });
+      });
+
+      btnExport.addEventListener("click", function () {
+        if (!lastResultRows.length || typeof XLSX === "undefined") return;
+        var ws = XLSX.utils.json_to_sheet(
+          lastResultRows.map(function (r) {
+            return {
+              保单年度: r.year,
+              复利收益率: r.compound,
+              单利收益率: r.simple,
+            };
+          })
+        );
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "收益率演示");
+        var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        XLSX.writeFile(wb, "保险演示收益率导出_" + stamp + ".xlsx");
+      });
+    })();
+  </script>
+</body>
+</html>
