@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>保险演示收益率小工具</title>
-  <!-- xlsx 脚本在页面底部加载，避免阻塞首屏（移动网络下 CDN 慢时否则会长时间白屏） -->
+  <title>保险演示收益率小工具 · Alpha Wang</title>
+  <!-- 表格库脚本在页面底部加载，避免阻塞首屏（移动网络下 CDN 慢时否则会长时间白屏） -->
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <style>
@@ -41,14 +41,75 @@
       color: #f0f6fc;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
+    .app-head-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .brand-lockup {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .brand-avatar-wrap {
+      position: relative;
+      flex: 0 0 auto;
+      width: 52px;
+      height: 52px;
+    }
+    .brand-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      background: #fff;
+    }
+    .brand-avatar.is-hidden {
+      display: none;
+    }
+    .brand-avatar-fb {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #1a3a52;
+      background: linear-gradient(160deg, #ffd88a, #ffb347);
+      border: 2px solid rgba(255, 255, 255, 0.45);
+    }
+    .brand-avatar-fb[hidden] {
+      display: none;
+    }
+    .brand-text {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
     header.app-head h1 {
       margin: 0;
       font-size: 1.02rem;
       font-weight: 650;
       letter-spacing: 0.02em;
     }
-    header.app-head p {
-      margin: 4px 0 0;
+    header.app-head .brand-byline {
+      margin: 3px 0 0;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      opacity: 0.95;
+      color: #e8f4ff;
+    }
+    header.app-head .brand-byline strong {
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+    header.app-head .app-head-desc {
+      margin: 6px 0 0;
       font-size: var(--fs-xs);
       opacity: 0.88;
       line-height: 1.4;
@@ -128,6 +189,12 @@
       color: var(--muted);
       font-size: 0.72rem;
       line-height: 1.32;
+    }
+    .mode-option.mode-option-label-only span {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
     }
 
     #file-input {
@@ -212,9 +279,9 @@
 
     .table-wrap {
       overflow: auto;
-      /* 约可完整露出 30 行量级（视字号与视口高度而定），仍保留滚动以容纳更长演示表 */
-      max-height: min(78vh, 920px);
-      min-height: 240px;
+      /* 约可完整露出约 30 行数据（视字号与视口高度而定），更长演示表仍可滚动 */
+      max-height: min(92vh, 1240px);
+      min-height: 280px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: #fafcfe;
@@ -313,6 +380,20 @@
       color: var(--text);
       margin-bottom: 4px;
     }
+    .field label.field-inline-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+    .field label.field-inline-check input[type="checkbox"] {
+      margin-top: 3px;
+      flex-shrink: 0;
+      width: auto;
+      height: auto;
+      accent-color: var(--accent);
+    }
     .field input[type="number"],
     .field input[type="text"] {
       width: 100%;
@@ -327,6 +408,18 @@
       font-size: 0.72rem;
       color: var(--muted);
       line-height: 1.32;
+    }
+    /** 保单表列格式说明：高对比暖色块，突出「填错列则结果全错」 */
+    .file-schema-note {
+      margin: 0 0 10px;
+      padding: 11px 14px;
+      font-size: 0.8rem;
+      line-height: 1.55;
+      font-weight: 600;
+      color: #5c3a06;
+      background: linear-gradient(160deg, #fff8e6, #ffefd0);
+      border: 1px solid #e0a82a;
+      border-radius: 8px;
     }
     .params-summary {
       margin-top: 8px;
@@ -481,8 +574,29 @@
 <body>
   <div id="xlsx-load-error" role="alert"></div>
   <header class="app-head">
-    <h1>保险演示收益率小工具</h1>
-    <p>左侧确认参数并上传演示表 → 右侧按 A 列年度、所选模式下 <strong>E 列</strong>或 <strong>K+G 列</strong>现价计算复利与单利（不预缴 / 预缴口径见预缴说明）</p>
+    <div class="app-head-inner">
+      <div class="brand-lockup">
+        <div class="brand-avatar-wrap">
+          <img
+            class="brand-avatar"
+            src="alpha-wang-avatar.png"
+            width="52"
+            height="52"
+            alt="Alpha Wang"
+            decoding="async"
+            onerror="this.classList.add('is-hidden'); var fb=this.parentNode.querySelector('.brand-avatar-fb'); if(fb) fb.removeAttribute('hidden');"
+          />
+          <span class="brand-avatar-fb" hidden aria-hidden="true">AW</span>
+        </div>
+        <div class="brand-text">
+          <h1>保险演示收益率小工具</h1>
+          <p class="brand-byline">作者 <strong>Alpha Wang</strong></p>
+          <p class="app-head-desc">
+            左侧确认参数并上传演示表 → 右侧按 A 列年度、所选模式下 <strong>E 列</strong>或 <strong>K+G 列</strong>现价计算复利与单利（不预缴 / 预缴口径见预缴说明）
+          </p>
+        </div>
+      </div>
+    </div>
   </header>
 
   <div class="shell">
@@ -512,7 +626,15 @@
             placeholder="例如 5"
             autocomplete="off"
           />
-          <p class="field-hint">确认后将按年逐一弹出对话框，录入各年折扣（%，留空视为 0%）。</p>
+          <p class="field-hint" id="pay-years-discount-hint">
+            勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣（%，默认为 0%）。
+          </p>
+        </div>
+        <div class="field" style="margin-bottom: 2px">
+          <label for="no-year-discount" class="field-inline-check">
+            <input type="checkbox" id="no-year-discount" />
+            无折扣
+          </label>
         </div>
         <div class="btn-row" style="margin-top: 6px">
           <button type="button" id="btn-confirm-base" class="btn btn-primary">确认</button>
@@ -528,14 +650,12 @@
             <input type="radio" name="prepay_mode" value="no_prepay" checked />
             <span>
               <strong>不预缴</strong>
-              <small>无预缴相关优惠。</small>
             </span>
           </label>
           <label class="mode-option">
             <input type="radio" name="prepay_mode" value="prepay" />
             <span>
               <strong>预缴</strong>
-              <small>选择后需填写「预缴优惠」数值。</small>
             </span>
           </label>
         </fieldset>
@@ -548,9 +668,7 @@
             placeholder="如 68 表示 68%"
             autocomplete="off"
           />
-          <p class="field-hint">
-            <strong>预缴优惠按百分比理解</strong>（如填 <strong>68</strong> 即 <strong>68%</strong>）。少交金额 =（名义保额÷缴费年限）× 预缴优惠%；测算用一次性保费 = 名义保额 − 少交金额（例：名义 10,000、缴 5 年、68% → 年缴份额 2,000，少交 2,000×68%=1,360，折算保费 8,640）。预缴模式下右侧收益率<strong>不</strong>再使用各年折扣，但仍需先完成「确认」与折扣录入流程。
-          </p>
+          <p class="field-hint">预缴优惠为年化百分比折扣。</p>
           <p id="prepay-lump-hint" class="field-hint prepay-lump-hint" aria-live="polite"></p>
         </div>
       </div>
@@ -559,25 +677,19 @@
         <h2>演示模式</h2>
         <fieldset class="mode-group">
           <legend>请选择一种情形</legend>
-          <label class="mode-option">
+          <label class="mode-option mode-option-label-only">
             <input type="radio" name="premium_mode" value="no_withdraw" checked />
-            <span>
-              <strong>不提取</strong>
-              <small>演示表现金价读 <strong>E 列</strong>（与「不提取.xlsx」版式一致）。</small>
-            </span>
+            <span>不提取</span>
           </label>
-          <label class="mode-option">
+          <label class="mode-option mode-option-label-only">
             <input type="radio" name="premium_mode" value="withdraw" />
-            <span>
-              <strong>提取</strong>
-              <small>演示表现金价 = <strong>K 列 + G 列</strong>（与「提取.xlsx」版式一致）。</small>
-            </span>
+            <span>提取</span>
           </label>
         </fieldset>
 
         <h2>保单演示文件</h2>
-        <p style="margin: 0 0 6px; font-size: 0.78rem; color: var(--muted)">
-          表内需含：<strong>A 列</strong>保单年度（如「1年/1岁」）。<strong>不提取</strong>时读 <strong>E 列</strong>预期保单现价；<strong>提取</strong>时现价 = <strong>K 列 + G 列</strong>。支持 .xlsx / .xls。
+        <p class="file-schema-note">
+          表内需含：A 列保单年度（如「1年/1岁」）。不提取时读 E 列预期保单现价；提取时现价 = K 列 (累计提取金额)+ G 列(提取后剩余价值)。仅支持 .xlsx / .xls。
         </p>
         <input id="file-input" type="file" accept=".xlsx,.xls" />
         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
@@ -585,21 +697,9 @@
         </div>
         <div id="file-meta" class="file-meta" aria-live="polite"></div>
         <div class="btn-row">
-          <button type="button" id="btn-run" class="btn btn-primary" disabled>重新计算</button>
+          <button type="button" id="btn-run" class="btn btn-primary" disabled>开始计算</button>
           <button type="button" id="btn-clear-file" class="btn btn-ghost">清除文件</button>
         </div>
-        <div class="btn-row" style="margin-top: 6px">
-          <button type="button" id="btn-load-sample" class="btn btn-ghost">
-            尝试加载同目录「不提取.xlsx」
-          </button>
-          <button type="button" id="btn-load-sample-extract" class="btn btn-ghost">
-            尝试加载同目录「提取.xlsx」
-          </button>
-        </div>
-        <p class="field-hint" style="margin-top: 6px">
-          说明：通过本地 HTTP 打开页面时，可自动拉取同文件夹下的「不提取.xlsx」或「提取.xlsx」；直接双击
-          HTML（file://）时浏览器会拦截，请改用上传或本地静态服务器。请按所选模式使用对应列（不提取：E；提取：K+G）。
-        </p>
       </div>
     </section>
 
@@ -611,7 +711,7 @@
       <div class="card" style="margin: 0; padding: 0; overflow: hidden">
         <div id="table-container" class="table-wrap">
           <div class="placeholder-hint" id="placeholder">
-            请确认基本参数（不预缴或预缴并填写预缴优惠），选择「不提取」或「提取」，上传演示表或加载同目录示例 xlsx 后点击「重新计算」。
+            请确认基本参数（不预缴或预缴并填写预缴优惠），选择「不提取」或「提取」，上传演示表后点击「开始计算」。
           </div>
         </div>
       </div>
@@ -648,7 +748,7 @@
 
   <footer class="next-info">
     <p class="browser-compat-note">
-      建议使用 Chrome、Firefox、Safari、Microsoft Edge 等近年版本；需启用 JavaScript、FileReader 与网络（或本地放置 xlsx 库）。<strong>手机若长时间白屏</strong>，多为表格库脚本（jsDelivr CDN）加载慢或被拦截，请换 Wi‑Fi、用系统浏览器或微信内点「在浏览器打开」；根本解决请将 xlsx.full.min.js 与页面同域部署。以 file:// 打开时无法自动加载同目录「不提取.xlsx」「提取.xlsx」，请直接上传文件或通过本地 HTTP 服务访问本页。
+      建议使用 Chrome、Firefox、Safari、Microsoft Edge 等近年版本；需启用 JavaScript、FileReader 与网络（或本地放置表格库脚本）。<strong>手机若长时间白屏</strong>，多为表格库脚本（jsDelivr CDN）加载慢或被拦截，请换 Wi‑Fi、用系统浏览器或微信内点「在浏览器打开」；根本解决请将 xlsx-js-style 的 dist/xlsx.min.js 与页面同域部署。以 file:// 打开时浏览器可能限制读取本地文件，请通过本页上传或改用本地 HTTP 服务访问本页。
     </p>
     <details>
       <summary>后续细化时，建议您补充的信息</summary>
@@ -657,16 +757,16 @@
         <li>「不提取」与「提取」各自对应的现金流定义与收益率口径（IRR、复利、单利的精确定义）。</li>
         <li>是否需要客户填写额外参数（如贴现率、提取金额与年份等）及默认值。</li>
         <li>导出 Excel 的列名、列顺序、是否需要多个工作表。</li>
-        <li>客户环境是否必须离线可用（若不能访问 CDN，需改为本地引入 xlsx 库）。</li>
+        <li>客户环境是否必须离线可用（若不能访问 CDN，需改为本地引入 xlsx-js-style 的 dist/xlsx.min.js）。</li>
       </ul>
     </details>
   </footer>
 
   <script
-    src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
-    onerror="(function(){var d=document.getElementById('xlsx-load-error');if(d){d.style.display='block';d.textContent='表格库加载失败（常见原因：网络无法访问 jsDelivr CDN）。请换网络、关闭省流/代理，或由管理员将 xlsx.full.min.js 与本页放在同一网站目录并修改引用路径。';}})()"
+    src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"
+    onerror="(function(){var d=document.getElementById('xlsx-load-error');if(d){d.style.display='block';d.textContent='表格库加载失败（常见原因：网络无法访问 jsDelivr CDN）。请换网络、关闭省流/代理，或由管理员将 xlsx-js-style 的 dist/xlsx.min.js 与本页放在同一网站目录并修改引用路径。';}})()"
   ></script>
-  <!-- 商用交付前请自行核对 SheetJS 许可证是否适用 -->
+  <!-- xlsx-js-style 基于 SheetJS CE；商用交付前请自行核对许可证是否适用 -->
   <script>
     (function () {
       if (typeof XLSX === "undefined") {
@@ -674,7 +774,7 @@
         if (el) {
           el.style.display = "block";
           el.textContent =
-            "表格库未就绪：请检查网络后刷新。若在公司内网或跨境网络不稳定，请将 xlsx.full.min.js 下载后与页面同域引用（见页脚说明）。";
+            "表格库未就绪：请检查网络后刷新。若在公司内网或跨境网络不稳定，请将 xlsx-js-style 的 dist/xlsx.min.js 下载后与页面同域引用（见页脚说明）。";
         }
       }
 
@@ -772,7 +872,7 @@
         return Number.isFinite(n) && n > 0 ? n : null;
       }
 
-      /** 解析现价单元格（不提取读 E 列；提取为 K 列与 G 列分别解析后相加，解析规则相同） */
+      /** 解析现价单元格（不提取读 E 列；提取为 K 列累计提取金额与 G 列提取后剩余价值，两列数值相加） */
       function parseCashValueCell(cellVal) {
         if (cellVal === null || cellVal === undefined) return null;
         if (typeof cellVal === "number" && isFinite(cellVal)) return cellVal;
@@ -1068,6 +1168,7 @@
 
       var nominalInput = document.getElementById("nominal-amount");
       var payYearsInput = document.getElementById("pay-years");
+      var noYearDiscountInput = document.getElementById("no-year-discount");
       var btnConfirmBase = document.getElementById("btn-confirm-base");
       var baseParamsStatus = document.getElementById("base-params-status");
       var prepayBonusRow = document.getElementById("prepay-bonus-row");
@@ -1136,6 +1237,51 @@
         }
       }
 
+      /**
+       * 写入已确认的名义保额、缴费年限与各年折扣，并刷新预缴提示与按钮状态。
+       * @param {boolean} compactDiscountMsg 为 true 时不逐年列出（用于「无折扣」全 0）。
+       */
+      function commitConfirmedBaseParams(nominal, payYears, discountsArray, compactDiscountMsg) {
+        bizParams.nominalAmount = nominal;
+        bizParams.payYears = payYears;
+        bizParams.yearDiscounts = discountsArray.slice();
+        bizParams.baseConfirmed = true;
+        syncPrepayBonusToBiz();
+        var nomDisp =
+          typeof bizParams.nominalAmount === "number" &&
+          isFinite(bizParams.nominalAmount)
+            ? bizParams.nominalAmount.toLocaleString("zh-CN", {
+                maximumFractionDigits: 2,
+              })
+            : String(bizParams.nominalAmount);
+        var discountSentence;
+        if (compactDiscountMsg) {
+          discountSentence = "各年折扣均为 0%。";
+        } else {
+          var parts = [];
+          for (var j = 0; j < bizParams.yearDiscounts.length; j++) {
+            parts.push(
+              "第" +
+                (j + 1) +
+                "年 " +
+                formatPercentForSummary(bizParams.yearDiscounts[j]) +
+                "%"
+            );
+          }
+          discountSentence = "各年折扣：" + parts.join("；") + "。";
+        }
+        setBaseParamsStatus(
+          "已确认：名义保额 " +
+            nomDisp +
+            "，缴费年限 " +
+            bizParams.payYears +
+            " 年。" +
+            discountSentence,
+          true
+        );
+        updateRunButtonState();
+      }
+
       function refreshPrepayLumpHint() {
         var el = document.getElementById("prepay-lump-hint");
         if (!el) return;
@@ -1145,45 +1291,22 @@
           return;
         }
         if (!bizParams.baseConfirmed || !bizParams.nominalAmount || !bizParams.payYears) {
-          el.textContent =
-            "请先完成基本参数「确认」后，此处将显示少交金额与折算一次性保费。";
           return;
         }
         syncPrepayBonusToBiz();
         if (bizParams.prepayBonus === null || !isFinite(bizParams.prepayBonus)) {
-          el.textContent = "填写预缴优惠（%）后，将显示少交金额与折算一次性保费。";
           return;
         }
         var nom = bizParams.nominalAmount;
         var py = bizParams.payYears;
         var pct = bizParams.prepayBonus;
-        var perYear = nom / py;
-        var reduction = perYear * (pct / 100);
         var lump = buildPrepayLumpPremium(nom, py, pct);
-        function fmtMoney2(v) {
-          if (!isFinite(v)) return "—";
-          var r = roundHalfUp(v, 2);
-          return r.toLocaleString("zh-CN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
-        }
         if (!isFinite(lump) || !(lump > 0)) {
-          el.textContent =
-            "当前少交金额折算为 " + fmtMoney2(reduction) + "，一次性保费须大于 0。请调低预缴优惠（%）。";
+          el.textContent = "预缴优惠过大：折算一次性保费须大于 0，请调低百分比。";
           el.className = "field-hint prepay-lump-hint prepay-lump-hint-warn";
           return;
         }
-        el.textContent =
-          "年缴份额 " +
-          fmtMoney2(perYear) +
-          "；少交 " +
-          fmtMoney2(reduction) +
-          "（= 年缴份额×" +
-          pct +
-          "%）；折算一次性保费 " +
-          fmtMoney2(lump) +
-          "。";
+        el.textContent = "";
         el.className = "field-hint prepay-lump-hint prepay-lump-hint-ok";
       }
 
@@ -1211,6 +1334,20 @@
         setBaseParamsStatus("", false);
         updateRunButtonState();
       });
+
+      if (noYearDiscountInput) {
+        noYearDiscountInput.addEventListener("change", function () {
+          if (discountModalOverlay.classList.contains("open")) {
+            closeDiscountModal();
+          }
+          invalidateBaseParams();
+          setBaseParamsStatus(
+            "「无折扣」选项已变更，请重新点击「确认」完成基本参数。",
+            false
+          );
+          updateRunButtonState();
+        });
+      }
 
       function closeDiscountModal() {
         discountModalOverlay.classList.remove("open");
@@ -1280,7 +1417,7 @@
         discountModalLead.innerHTML =
           "请输入第 <strong>" +
           wizardStep +
-          "</strong> 年的折扣率（<strong>%</strong>）。不填写或留空视为 <strong>0%</strong>。";
+          "</strong> 年的折扣率（<strong>%</strong>）。不填写则默认为 <strong>0%</strong>。";
         var existing = wizardDraft[wizardStep - 1];
         if (existing !== null && existing !== undefined && isFinite(existing)) {
           discountModalInput.value = formatPercentForSummary(existing);
@@ -1358,41 +1495,12 @@
           showWizardStep();
         } else {
           closeDiscountModal();
-          bizParams.nominalAmount = parseFloat(
-            String(nominalInput.value).trim().replace(",", ".")
+          commitConfirmedBaseParams(
+            parseFloat(String(nominalInput.value).trim().replace(",", ".")),
+            wizardN,
+            wizardDraft.slice(),
+            false
           );
-          bizParams.payYears = wizardN;
-          bizParams.yearDiscounts = wizardDraft.slice();
-          bizParams.baseConfirmed = true;
-          syncPrepayBonusToBiz();
-          var parts = [];
-          for (var j = 0; j < bizParams.yearDiscounts.length; j++) {
-            parts.push(
-              "第" +
-                (j + 1) +
-                "年 " +
-                formatPercentForSummary(bizParams.yearDiscounts[j]) +
-                "%"
-            );
-          }
-          var nomDisp =
-            typeof bizParams.nominalAmount === "number" &&
-            isFinite(bizParams.nominalAmount)
-              ? bizParams.nominalAmount.toLocaleString("zh-CN", {
-                  maximumFractionDigits: 2,
-                })
-              : String(bizParams.nominalAmount);
-          setBaseParamsStatus(
-            "已确认：名义保额 " +
-              nomDisp +
-              "，缴费年限 " +
-              bizParams.payYears +
-              " 年。各年折扣：" +
-              parts.join("；") +
-              "。",
-            true
-          );
-          updateRunButtonState();
         }
       });
 
@@ -1407,6 +1515,15 @@
         if (!Number.isInteger(years) || years < 1 || years > 120) {
           setBaseParamsStatus("请填写有效的缴费年限（1～120 的整数）。", false);
           payYearsInput.focus();
+          return;
+        }
+        if (noYearDiscountInput && noYearDiscountInput.checked) {
+          closeDiscountModal();
+          var zeroDiscounts = [];
+          for (var zi = 0; zi < years; zi++) {
+            zeroDiscounts.push(0);
+          }
+          commitConfirmedBaseParams(nom, years, zeroDiscounts, true);
           return;
         }
         wizardN = years;
@@ -1441,58 +1558,6 @@
         if (workbookDisplayName) return workbookDisplayName;
         if (currentFile && currentFile.name) return currentFile.name;
         return "演示表";
-      }
-
-      /** 同源相对路径：无 fetch 时用 XHR（旧环境）；返回 ArrayBuffer */
-      function loadUrlAsArrayBuffer(url) {
-        return new Promise(function (resolve, reject) {
-          if (typeof fetch === "function") {
-            fetch(url)
-              .then(function (r) {
-                if (!r.ok) {
-                  throw new Error(
-                    "无法获取「" +
-                      url +
-                      "」（HTTP " +
-                      r.status +
-                      "）。请将该文件放在与本 HTML 相同文件夹，并用本地服务器打开页面；或直接拖拽上传。"
-                  );
-                }
-                return r.arrayBuffer();
-              })
-              .then(resolve)
-              .catch(reject);
-            return;
-          }
-          var xhr = new XMLHttpRequest();
-          xhr.open("GET", url, true);
-          xhr.responseType = "arraybuffer";
-          xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(xhr.response);
-            } else {
-              reject(
-                new Error(
-                  "无法获取「" +
-                    url +
-                    "」（HTTP " +
-                    xhr.status +
-                    "）。请将该文件放在与本 HTML 相同文件夹，并用本地服务器打开页面；或直接拖拽上传。"
-                )
-              );
-            }
-          };
-          xhr.onerror = function () {
-            reject(
-              new Error(
-                "网络错误，无法加载「" +
-                  url +
-                  "」。请检查是否用 http(s) 打开页面，或直接上传文件。"
-              )
-            );
-          };
-          xhr.send();
-        });
       }
 
       function pickFile() {
@@ -1567,7 +1632,7 @@
         ph.className = "placeholder-hint";
         ph.id = "placeholder";
         ph.textContent =
-          "请确认基本参数（不预缴或预缴并填写预缴优惠），选择「不提取」或「提取」，上传演示表或加载同目录「不提取.xlsx」「提取.xlsx」后点击「重新计算」。";
+          "请确认基本参数（不预缴或预缴并填写预缴优惠），选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
         tableContainer.appendChild(ph);
       }
 
@@ -1575,7 +1640,7 @@
         return new Promise(function (resolve, reject) {
           if (typeof XLSX === "undefined") {
             reject(
-              new Error("未加载 xlsx 库（可能无网络）。可改为本地放置 xlsx.full.min.js 后引用。")
+              new Error("未加载表格库（可能无网络）。可改为本地放置 xlsx-js-style 的 dist/xlsx.min.js 后引用。")
             );
             return;
           }
@@ -1642,6 +1707,188 @@
         tableContainer.appendChild(table);
       }
 
+      /** 导出封面与页内标题一致 */
+      var EXPORT_TOOL_TITLE = "保险演示收益率小工具";
+      var EXPORT_AUTHOR_NAME = "Alpha Wang";
+
+      /**
+       * 构建导出工作表：自 C4 起、C–F 四列紧凑版式；第 5 行整行合并；最后一行四格同画底边（无额外底栏行）。
+       * 不足 30 行时末尾补空行。
+       * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string }[]} rows
+       */
+      function buildStyledYieldSheet(rows) {
+        var enc = XLSX.utils.encode_cell;
+        var c0 = 2;
+        var cEnd = 5;
+        var blk = { style: "thin", color: { rgb: "FF1A1A1A" } };
+        var grayH = { style: "thin", color: { rgb: "FFE0E8F0" } };
+
+        var padded = rows.slice();
+        while (padded.length < 30) {
+          padded.push({
+            yearLabel: "",
+            yearNum: padded.length + 1,
+            cashValue: null,
+            compoundPct: "",
+            simplePct: "",
+          });
+        }
+
+        var timeStr = new Date().toLocaleString("zh-CN", { hour12: false });
+        var rTitle = 3;
+        var rSub = 4;
+        var rHead = 5;
+        var rData0 = 6;
+        var lastDataR = rData0 + padded.length - 1;
+
+        var ws = {};
+        var merges = [];
+
+        function setCell(r, c, v, t) {
+          var addr = enc({ r: r, c: c });
+          var tt =
+            t ||
+            (typeof v === "number" && isFinite(v) ? "n" : typeof v === "string" ? "s" : "s");
+          ws[addr] = { v: v, t: tt };
+          return addr;
+        }
+
+        setCell(rTitle, c0, EXPORT_TOOL_TITLE, "s");
+        merges.push({ s: { r: rTitle, c: c0 }, e: { r: rTitle, c: cEnd } });
+
+        var subText =
+          "作者：" + EXPORT_AUTHOR_NAME + "　　　　导出时间：" + timeStr;
+        setCell(rSub, c0, subText, "s");
+        merges.push({ s: { r: rSub, c: c0 }, e: { r: rSub, c: cEnd } });
+
+        var hdrs = ["保单年度", "预期保单现价", "复利收益率", "单利收益率"];
+        for (var h = 0; h < 4; h++) {
+          setCell(rHead, c0 + h, hdrs[h], "s");
+        }
+
+        for (var ir = 0; ir < padded.length; ir++) {
+          var rr = rData0 + ir;
+          var rec = padded[ir];
+          var cv =
+            rec.cashValue !== null && isFinite(rec.cashValue) ? rec.cashValue : "";
+          setCell(rr, c0 + 0, rec.yearLabel != null && rec.yearLabel !== "" ? String(rec.yearLabel) : "", "s");
+          var tCash =
+            typeof cv === "number" && isFinite(cv) ? "n" : "s";
+          setCell(rr, c0 + 1, cv === "" ? "" : cv, tCash);
+          setCell(rr, c0 + 2, rec.compoundPct || "", "s");
+          setCell(rr, c0 + 3, rec.simplePct || "", "s");
+        }
+
+        ws["!merges"] = merges;
+        ws["!ref"] = XLSX.utils.encode_range({
+          s: { r: 0, c: 0 },
+          e: { r: lastDataR, c: cEnd },
+        });
+        ws["!cols"] = [
+          { wch: 3 },
+          { wch: 3 },
+          { wch: 14 },
+          { wch: 16 },
+          { wch: 12 },
+          { wch: 12 },
+        ];
+        ws["!rows"] = [];
+        for (var ri = 0; ri <= lastDataR; ri++) {
+          if (ri === rTitle) ws["!rows"][ri] = { hpt: 20 };
+          else if (ri === rSub) ws["!rows"][ri] = { hpt: 16 };
+          else if (ri === rHead) ws["!rows"][ri] = { hpt: 20 };
+          else ws["!rows"][ri] = { hpt: 18 };
+        }
+
+        var titleAddr = enc({ r: rTitle, c: c0 });
+        ws[titleAddr].s = {
+          font: {
+            bold: true,
+            sz: 10,
+            color: { rgb: "FFF0F6FC" },
+            name: "Microsoft YaHei",
+          },
+          fill: { patternType: "solid", fgColor: { rgb: "FF1F3D56" } },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+          border: {
+            top: blk,
+            left: blk,
+            right: blk,
+          },
+        };
+
+        var subAddr = enc({ r: rSub, c: c0 });
+        ws[subAddr].s = {
+          font: { sz: 10, color: { rgb: "FF1A2433" }, name: "Microsoft YaHei" },
+          fill: { patternType: "solid", fgColor: { rgb: "FFE8F1F9" } },
+          alignment: { horizontal: "left", vertical: "center", wrapText: true },
+          border: { left: blk, right: blk },
+        };
+
+        for (var hc = 0; hc < 4; hc++) {
+          var cc = c0 + hc;
+          var ha = enc({ r: rHead, c: cc });
+          var hb = {};
+          if (hc === 0) hb.left = blk;
+          if (hc === 3) hb.right = blk;
+          ws[ha].s = {
+            font: {
+              bold: true,
+              sz: 11,
+              color: { rgb: "FFEEF6FC" },
+              name: "Microsoft YaHei",
+            },
+            fill: { patternType: "solid", fgColor: { rgb: "FF2A4D6E" } },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: hb,
+          };
+        }
+
+        for (var dr = 0; dr < padded.length; dr++) {
+          var rr = rData0 + dr;
+          var zebraFill =
+            dr % 2 === 0
+              ? { patternType: "solid", fgColor: { rgb: "FFFFFFFF" } }
+              : { patternType: "solid", fgColor: { rgb: "FFF2F6FB" } };
+          var isLast = dr === padded.length - 1;
+          for (var bc = 0; bc < 4; bc++) {
+            var cc = c0 + bc;
+            var addr = enc({ r: rr, c: cc });
+            if (!ws[addr]) continue;
+            var isNum =
+              typeof ws[addr].v === "number" && isFinite(ws[addr].v);
+            var bdr = {};
+            if (bc === 0) bdr.left = blk;
+            if (bc === 3) bdr.right = blk;
+            if (isLast) {
+              bdr.bottom = blk;
+            } else {
+              bdr.bottom = grayH;
+            }
+            var hAlign = "center";
+            if (bc === 0) hAlign = "left";
+            else if (bc === 1) hAlign = "center";
+            else hAlign = "right";
+            var cellStyle = {
+              font: { sz: 10, name: "Microsoft YaHei" },
+              fill: zebraFill,
+              alignment: {
+                horizontal: hAlign,
+                vertical: "center",
+                wrapText: false,
+              },
+              border: bdr,
+            };
+            if (bc === 1 && isNum) {
+              cellStyle.numFmt = "#,##0.00";
+            }
+            ws[addr].s = cellStyle;
+          }
+        }
+
+        return ws;
+      }
+
       btnRun.addEventListener("click", function () {
         if (!currentFile) return;
         btnRun.disabled = true;
@@ -1689,59 +1936,9 @@
           });
       });
 
-      function wireSampleXlsxButton(buttonId, fileName) {
-        var btn = document.getElementById(buttonId);
-        if (!btn) return;
-        btn.addEventListener("click", function () {
-          if (typeof XLSX === "undefined") {
-            setFileMeta("未加载 xlsx 库。", false);
-            return;
-          }
-          setFileMeta("正在尝试加载「" + fileName + "」…", false);
-          loadUrlAsArrayBuffer(fileName)
-            .then(function (buf) {
-              var mime =
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-              try {
-                currentFile = new Blob([buf], { type: mime });
-              } catch (blobErr) {
-                throw new Error("当前浏览器无法创建 Blob，请直接上传 Excel 文件。");
-              }
-              workbookDisplayName = fileName;
-              return readExcelStub(currentFile);
-            })
-            .then(function () {
-              setFileMeta(
-                "已从同目录加载「" + fileName + "」。请点击「重新计算」。",
-                true
-              );
-              updateRunButtonState();
-            })
-            .catch(function (err) {
-              console.error(err);
-              setFileMeta(err.message || String(err), false);
-            });
-        });
-      }
-
-      wireSampleXlsxButton("btn-load-sample", "不提取.xlsx");
-      wireSampleXlsxButton("btn-load-sample-extract", "提取.xlsx");
-
       btnExport.addEventListener("click", function () {
         if (!lastResultRows.length || typeof XLSX === "undefined") return;
-        var ws = XLSX.utils.json_to_sheet(
-          lastResultRows.map(function (r) {
-            return {
-              保单年度: r.yearLabel,
-              预期保单现价:
-                r.cashValue !== null && isFinite(r.cashValue)
-                  ? r.cashValue
-                  : "",
-              复利收益率: r.compoundPct,
-              单利收益率: r.simplePct,
-            };
-          })
-        );
+        var ws = buildStyledYieldSheet(lastResultRows);
         var wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "收益率");
         var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
