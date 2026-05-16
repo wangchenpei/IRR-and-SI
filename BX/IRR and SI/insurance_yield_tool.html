@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>保险演示收益率小工具 · Alpha Wang</title>
-  <!-- 表格库脚本在页面底部加载，避免阻塞首屏（移动网络下 CDN 慢时否则会长时间白屏） -->
+  <!-- 表格库脚本在页面底部加载，避免阻塞首屏(移动网络下 CDN 慢时否则会长时间白屏) -->
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <style>
@@ -107,12 +107,6 @@
     header.app-head .brand-byline strong {
       font-weight: 700;
       letter-spacing: 0.06em;
-    }
-    header.app-head .app-head-desc {
-      margin: 6px 0 0;
-      font-size: var(--fs-xs);
-      opacity: 0.88;
-      line-height: 1.4;
     }
     .shell {
       display: flex;
@@ -279,9 +273,9 @@
 
     .table-wrap {
       overflow: auto;
-      /* 约可完整露出约 30 行数据（视字号与视口高度而定），更长演示表仍可滚动 */
-      max-height: min(92vh, 1240px);
-      min-height: 280px;
+      /* 表头约一行 + 约 27 行数据为可视上限(略收紧行高估算，避免露出到约 29 行)；不足 27 行随内容变矮 */
+      max-height: min(92vh, calc(2.65rem + 27 * 1.96rem));
+      min-height: 0;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: #fafcfe;
@@ -591,9 +585,6 @@
         <div class="brand-text">
           <h1>保险演示收益率小工具</h1>
           <p class="brand-byline">作者 <strong>Alpha Wang</strong></p>
-          <p class="app-head-desc">
-            左侧确认参数并上传演示表 → 右侧按 A 列年度、所选模式下 <strong>E 列</strong>或 <strong>K+G 列</strong>现价计算复利与单利（不预缴 / 预缴口径见预缴说明）
-          </p>
         </div>
       </div>
     </div>
@@ -613,10 +604,10 @@
             placeholder="请输入名义保额"
             autocomplete="off"
           />
-          <p class="field-hint">数值单位与后续演示表保持一致（如元）。</p>
+          <p class="field-hint">数值单位与后续演示表保持一致(如元)。</p>
         </div>
         <div class="field">
-          <label for="pay-years">缴费年限（年）</label>
+          <label for="pay-years">缴费年限(年)</label>
           <input
             id="pay-years"
             type="number"
@@ -627,7 +618,7 @@
             autocomplete="off"
           />
           <p class="field-hint" id="pay-years-discount-hint">
-            勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣（%，默认为 0%）。
+            勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣(%，默认为 0%)。
           </p>
         </div>
         <div class="field" style="margin-bottom: 2px">
@@ -660,7 +651,7 @@
           </label>
         </fieldset>
         <div id="prepay-bonus-row" hidden>
-          <label for="prepay-bonus">预缴优惠（%）</label>
+          <label for="prepay-bonus">预缴优惠(%)</label>
           <input
             id="prepay-bonus"
             type="number"
@@ -689,7 +680,7 @@
 
         <h2>保单演示文件</h2>
         <p class="file-schema-note">
-          表内需含：A 列保单年度（如「1年/1岁」）。不提取时读 E 列预期保单现价；提取时现价 = K 列 (累计提取金额)+ G 列(提取后剩余价值)。仅支持 .xlsx / .xls。
+          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = K 列 (累计提取金额)+ G 列(提取后剩余价值)。仅支持 .xlsx / .xls。
         </p>
         <input id="file-input" type="file" accept=".xlsx,.xls" />
         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
@@ -711,7 +702,7 @@
       <div class="card" style="margin: 0; padding: 0; overflow: hidden">
         <div id="table-container" class="table-wrap">
           <div class="placeholder-hint" id="placeholder">
-            请确认基本参数（不预缴或预缴并填写预缴优惠），选择「不提取」或「提取」，上传演示表后点击「开始计算」。
+            请确认基本参数(不预缴或预缴并填写预缴优惠)，选择「不提取」或「提取」，上传演示表后点击「开始计算」。
           </div>
         </div>
       </div>
@@ -733,10 +724,10 @@
         placeholder="例：10"
         autocomplete="off"
         spellcheck="false"
-        aria-label="该年度折扣率（百分比）"
+        aria-label="该年度折扣率(百分比)"
       />
       <p class="modal-input-hint">
-        直接填数字即可表示百分比（如填 <strong>10</strong> 即 <strong>10%</strong>）。<strong>留空为 0%</strong>。
+        直接填数字即可表示百分比(如填 <strong>10</strong> 即 <strong>10%</strong>)。<strong>留空为 0%</strong>。
       </p>
       <div class="modal-actions">
         <button type="button" id="discount-modal-cancel" class="btn btn-ghost">取消</button>
@@ -748,23 +739,23 @@
 
   <footer class="next-info">
     <p class="browser-compat-note">
-      建议使用 Chrome、Firefox、Safari、Microsoft Edge 等近年版本；需启用 JavaScript、FileReader 与网络（或本地放置表格库脚本）。<strong>手机若长时间白屏</strong>，多为表格库脚本（jsDelivr CDN）加载慢或被拦截，请换 Wi‑Fi、用系统浏览器或微信内点「在浏览器打开」；根本解决请将 xlsx-js-style 的 dist/xlsx.min.js 与页面同域部署。以 file:// 打开时浏览器可能限制读取本地文件，请通过本页上传或改用本地 HTTP 服务访问本页。
+      建议使用 Chrome、Firefox、Safari、Microsoft Edge 等近年版本；需启用 JavaScript、FileReader 与网络(或本地放置表格库脚本)。<strong>手机若长时间白屏</strong>，多为表格库脚本(jsDelivr CDN)加载慢或被拦截，请换 Wi‑Fi、用系统浏览器或微信内点「在浏览器打开」；根本解决请将 xlsx-js-style 的 dist/xlsx.min.js 与页面同域部署。以 file:// 打开时浏览器可能限制读取本地文件，请通过本页上传或改用本地 HTTP 服务访问本页。
     </p>
     <details>
       <summary>后续细化时，建议您补充的信息</summary>
       <ul>
         <li>演示 Excel 的版式：工作表名、保单年度列、现金流 / 现价 / 保费等所在列或表头关键字。</li>
-        <li>「不提取」与「提取」各自对应的现金流定义与收益率口径（IRR、复利、单利的精确定义）。</li>
-        <li>是否需要客户填写额外参数（如贴现率、提取金额与年份等）及默认值。</li>
+        <li>「不提取」与「提取」各自对应的现金流定义与收益率口径(IRR、复利、单利的精确定义)。</li>
+        <li>是否需要客户填写额外参数(如贴现率、提取金额与年份等)及默认值。</li>
         <li>导出 Excel 的列名、列顺序、是否需要多个工作表。</li>
-        <li>客户环境是否必须离线可用（若不能访问 CDN，需改为本地引入 xlsx-js-style 的 dist/xlsx.min.js）。</li>
+        <li>客户环境是否必须离线可用(若不能访问 CDN，需改为本地引入 xlsx-js-style 的 dist/xlsx.min.js)。</li>
       </ul>
     </details>
   </footer>
 
   <script
     src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"
-    onerror="(function(){var d=document.getElementById('xlsx-load-error');if(d){d.style.display='block';d.textContent='表格库加载失败（常见原因：网络无法访问 jsDelivr CDN）。请换网络、关闭省流/代理，或由管理员将 xlsx-js-style 的 dist/xlsx.min.js 与本页放在同一网站目录并修改引用路径。';}})()"
+    onerror="(function(){var d=document.getElementById('xlsx-load-error');if(d){d.style.display='block';d.textContent='表格库加载失败(常见原因：网络无法访问 jsDelivr CDN)。请换网络、关闭省流/代理，或由管理员将 xlsx-js-style 的 dist/xlsx.min.js 与本页放在同一网站目录并修改引用路径。';}})()"
   ></script>
   <!-- xlsx-js-style 基于 SheetJS CE；商用交付前请自行核对许可证是否适用 -->
   <script>
@@ -774,7 +765,7 @@
         if (el) {
           el.style.display = "block";
           el.textContent =
-            "表格库未就绪：请检查网络后刷新。若在公司内网或跨境网络不稳定，请将 xlsx-js-style 的 dist/xlsx.min.js 下载后与页面同域引用（见页脚说明）。";
+            "表格库未就绪：请检查网络后刷新。若在公司内网或跨境网络不稳定，请将 xlsx-js-style 的 dist/xlsx.min.js 下载后与页面同域引用(见页脚说明)。";
         }
       }
 
@@ -788,15 +779,15 @@
 
       /** @type {File | Blob | null} */
       var currentFile = null;
-      /** 当 currentFile 为 Blob（无 name）时用于展示与导出说明 */
+      /** 当 currentFile 为 Blob(无 name)时用于展示与导出说明 */
       var workbookDisplayName = "";
       /** @type {{ sheetNames: string[], wb?: any } | null} */
       var lastWorkbookStub = null;
-      /** @type {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string }[]} */
+      /** @type {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null }[]} */
       var lastResultRows = [];
 
       /**
-       * 四舍五入到 fractionDigits 位小数（half-up：绝对值先乘 10^d，再 Math.round）。
+       * 四舍五入到 fractionDigits 位小数(half-up：绝对值先乘 10^d，再 Math.round)。
        */
       function roundHalfUp(num, fractionDigits) {
         if (!isFinite(num)) return NaN;
@@ -809,7 +800,7 @@
         return rounded / m;
       }
 
-      /** 年化收益率小数（如 0.05234）→ 「5.23%」，百分数保留两位小数并四舍五入 */
+      /** 年化收益率小数(如 0.05234)→ 「5.23%」，百分数保留两位小数并四舍五入 */
       function formatYieldPctHalfUp2(rateDecimal) {
         if (!isFinite(rateDecimal)) return null;
         var pct = rateDecimal * 100;
@@ -872,7 +863,7 @@
         return Number.isFinite(n) && n > 0 ? n : null;
       }
 
-      /** 解析现价单元格（不提取读 E 列；提取为 K 列累计提取金额与 G 列提取后剩余价值，两列数值相加） */
+      /** 解析现价单元格(不提取读 E 列；提取为 K 列累计提取金额与 G 列提取后剩余价值，两列数值相加) */
       function parseCashValueCell(cellVal) {
         if (cellVal === null || cellVal === undefined) return null;
         if (typeof cellVal === "number" && isFinite(cellVal)) return cellVal;
@@ -907,7 +898,7 @@
       }
 
       /**
-       * 求 x 使 sum_k premium_k (1+x)^(N-k+1) = S，x 为年化复利（小数）。
+       * 求 x 使 sum_k premium_k (1+x)^(N-k+1) = S，x 为年化复利(小数)。
        * 在 (-1, +∞) 上单调递增，二分法。
        */
       function solveCompoundRate(S, N, premiums, payYears) {
@@ -951,9 +942,9 @@
       }
 
       /**
-       * 单利 y（小数）：第 k 年保费 P_k 在第 N 年末 = P_k + P_k * y * (N-k+1)。
+       * 单利 y(小数)：第 k 年保费 P_k 在第 N 年末 = P_k + P_k * y * (N-k+1)。
        * sum_k [P_k + P_k * y * (N-k+1)] = S  →  y = (S - sum P_k) / sum(P_k * (N-k+1))。
-       * k 取 1..min(N,P)。（您原文 d、e 中「1800」「次方」按笔误处理为与 a–c 一致的线性项。）
+       * k 取 1..min(N,P)。(您原文 d、e 中「1800」「次方」按笔误处理为与 a–c 一致的线性项。)
        */
       function solveSimpleRate(S, N, premiums, payYears) {
         var m = Math.min(N, payYears);
@@ -975,7 +966,7 @@
       }
 
       /**
-       * 预缴口径：预缴优惠为对「年缴份额」的百分比（如 68 即 68%）。
+       * 预缴口径：预缴优惠为对「年缴份额」的百分比(如 68 即 68%)。
        * 年缴份额 = 名义保额÷缴费年限；少交 = 年缴份额×(预缴优惠÷100)；一次性保费 P = 名义保额 − 少交。
        * 复利：S = P(1+x)^N → x = (S/P)^(1/N) − 1。
        */
@@ -1001,7 +992,7 @@
       }
 
       /**
-       * 预缴折算一次性保费（与名义保额同单位）。
+       * 预缴折算一次性保费(与名义保额同单位)。
        * prepayBonusPct：百分比数值，如 68 表示 68%。
        */
       function buildPrepayLumpPremium(nominal, payYears, prepayBonusPct) {
@@ -1038,14 +1029,21 @@
               var partG = vG !== null && isFinite(vG) ? vG : 0;
               S = partK + partG;
             }
+            out.push({
+              yearLabel: String(row[0]).trim(),
+              yearNum: N,
+              cashValue: S,
+              valueK: vK,
+              valueG: vG,
+            });
           } else {
             S = parseCashValueCell(row[4]);
+            out.push({
+              yearLabel: String(row[0]).trim(),
+              yearNum: N,
+              cashValue: S,
+            });
           }
-          out.push({
-            yearLabel: String(row[0]).trim(),
-            yearNum: N,
-            cashValue: S,
-          });
         }
         out.sort(function (a, b) {
           return a.yearNum - b.yearNum;
@@ -1070,7 +1068,7 @@
         if (!ext.rows.length) {
           return {
             rows: [],
-            err: "未从 A 列解析到保单年度（需形如「1年/1岁」）。请检查表格式。",
+            err: "未从 A 列解析到保单年度(需形如「1年/1岁」)。请检查表格式。",
           };
         }
 
@@ -1079,7 +1077,7 @@
 
         if (prepayMode) {
           if (bizParams.prepayBonus === null || !isFinite(bizParams.prepayBonus)) {
-            return { rows: [], err: "预缴模式下请填写「预缴优惠」百分比（如 68 表示 68%）。" };
+            return { rows: [], err: "预缴模式下请填写「预缴优惠」百分比(如 68 表示 68%)。" };
           }
           var lump = buildPrepayLumpPremium(
             bizParams.nominalAmount,
@@ -1090,7 +1088,7 @@
             return {
               rows: [],
               err:
-                "按公式折算的一次性保费须大于 0：保费 = 名义保额 −（名义保额÷缴费年限）×（预缴优惠÷100）。预缴优惠过大时少交金额会≥名义保额，请调小百分比。",
+                "按公式折算的一次性保费须大于 0：保费 = 名义保额 −(名义保额÷缴费年限)×(预缴优惠÷100)。预缴优惠过大时少交金额会≥名义保额，请调小百分比。",
             };
           }
           for (var ip = 0; ip < ext.rows.length; ip++) {
@@ -1122,6 +1120,8 @@
               cashValue: Sp,
               compoundPct: compoundStrP,
               simplePct: simpleStrP,
+              valueK: recP.valueK,
+              valueG: recP.valueG,
             });
           }
           return { rows: results, err: null, prepayLumpPremium: lump };
@@ -1161,6 +1161,8 @@
             cashValue: S,
             compoundPct: compoundStr,
             simplePct: simpleStr,
+            valueK: rec.valueK,
+            valueG: rec.valueG,
           });
         }
         return { rows: results, err: null };
@@ -1239,7 +1241,7 @@
 
       /**
        * 写入已确认的名义保额、缴费年限与各年折扣，并刷新预缴提示与按钮状态。
-       * @param {boolean} compactDiscountMsg 为 true 时不逐年列出（用于「无折扣」全 0）。
+       * @param {boolean} compactDiscountMsg 为 true 时不逐年列出(用于「无折扣」全 0)。
        */
       function commitConfirmedBaseParams(nominal, payYears, discountsArray, compactDiscountMsg) {
         bizParams.nominalAmount = nominal;
@@ -1362,7 +1364,7 @@
       }
 
       /**
-       * 从输入框文本解析「百分比」数值（10 表示 10%），避免 type=number 与浮点误差。
+       * 从输入框文本解析「百分比」数值(10 表示 10%)，避免 type=number 与浮点误差。
        * 仅接受数字、可选负号、可选小数点；可含 % 与全角逗号。
        */
       function parsePercentFromText(raw) {
@@ -1413,11 +1415,11 @@
 
       function showWizardStep() {
         discountModalTitle.textContent =
-          "第 " + wizardStep + " 年折扣（共 " + wizardN + " 年）";
+          "第 " + wizardStep + " 年折扣(共 " + wizardN + " 年)";
         discountModalLead.innerHTML =
           "请输入第 <strong>" +
           wizardStep +
-          "</strong> 年的折扣率（<strong>%</strong>）。不填写则默认为 <strong>0%</strong>。";
+          "</strong> 年的折扣率(<strong>%</strong>)。不填写则默认为 <strong>0%</strong>。";
         var existing = wizardDraft[wizardStep - 1];
         if (existing !== null && existing !== undefined && isFinite(existing)) {
           discountModalInput.value = formatPercentForSummary(existing);
@@ -1508,12 +1510,12 @@
         var nom = parseFloat(String(nominalInput.value).trim().replace(",", "."));
         var years = parseInt(String(payYearsInput.value).trim(), 10);
         if (!isFinite(nom) || nom <= 0) {
-          setBaseParamsStatus("请填写有效的名义保额（须大于 0）。", false);
+          setBaseParamsStatus("请填写有效的名义保额(须大于 0)。", false);
           nominalInput.focus();
           return;
         }
         if (!Number.isInteger(years) || years < 1 || years > 120) {
-          setBaseParamsStatus("请填写有效的缴费年限（1～120 的整数）。", false);
+          setBaseParamsStatus("请填写有效的缴费年限(1～120 的整数)。", false);
           payYearsInput.focus();
           return;
         }
@@ -1544,6 +1546,12 @@
         var pm = document.querySelectorAll("input[name=\"premium_mode\"]");
         for (var pi = 0; pi < pm.length; pi++) {
           pm[pi].addEventListener("change", function () {
+            if (lastResultRows.length) {
+              lastResultRows = [];
+              btnExport.disabled = true;
+              renderPlaceholder();
+              setFileMeta("演示模式已变更，请重新点击「开始计算」。", false);
+            }
             updateRunButtonState();
           });
         }
@@ -1574,7 +1582,7 @@
         currentFile = file;
         workbookDisplayName = file.name;
         setFileMeta(
-          "已选择：「" + file.name + "」（" + (file.size / 1024).toFixed(1) + " KB）",
+          "已选择：「" + file.name + "」(" + (file.size / 1024).toFixed(1) + " KB)",
           true
         );
         updateRunButtonState();
@@ -1632,7 +1640,7 @@
         ph.className = "placeholder-hint";
         ph.id = "placeholder";
         ph.textContent =
-          "请确认基本参数（不预缴或预缴并填写预缴优惠），选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
+          "请确认基本参数(不预缴或预缴并填写预缴优惠)，选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
         tableContainer.appendChild(ph);
       }
 
@@ -1640,7 +1648,7 @@
         return new Promise(function (resolve, reject) {
           if (typeof XLSX === "undefined") {
             reject(
-              new Error("未加载表格库（可能无网络）。可改为本地放置 xlsx-js-style 的 dist/xlsx.min.js 后引用。")
+              new Error("未加载表格库(可能无网络)。可改为本地放置 xlsx-js-style 的 dist/xlsx.min.js 后引用。")
             );
             return;
           }
@@ -1685,21 +1693,42 @@
         table.className = "result";
         table.setAttribute("role", "grid");
         var thead = document.createElement("thead");
-        thead.innerHTML =
-          "<tr><th>保单年度</th><th>预期保单现价</th><th>复利收益率</th><th>单利收益率</th></tr>";
+        var withdraw = getPremiumMode() === "withdraw";
+        if (withdraw) {
+          thead.innerHTML =
+            "<tr><th>保单年度</th><th>K列(累计提取金额)</th><th>G列(提取后剩余价值)</th><th>复利收益率</th><th>单利收益率</th></tr>";
+        } else {
+          thead.innerHTML =
+            "<tr><th>保单年度</th><th>预期保单现价</th><th>复利收益率</th><th>单利收益率</th></tr>";
+        }
         var tbody = document.createElement("tbody");
         rows.forEach(function (r) {
           var tr = document.createElement("tr");
-          tr.innerHTML =
-            "<td>" +
-            escapeHtml(r.yearLabel) +
-            "</td><td>" +
-            escapeHtml(formatMoneyCell(r.cashValue)) +
-            "</td><td>" +
-            escapeHtml(r.compoundPct) +
-            "</td><td>" +
-            escapeHtml(r.simplePct) +
-            "</td>";
+          if (withdraw) {
+            tr.innerHTML =
+              "<td>" +
+              escapeHtml(r.yearLabel) +
+              "</td><td>" +
+              escapeHtml(formatMoneyCell(r.valueK)) +
+              "</td><td>" +
+              escapeHtml(formatMoneyCell(r.valueG)) +
+              "</td><td>" +
+              escapeHtml(r.compoundPct) +
+              "</td><td>" +
+              escapeHtml(r.simplePct) +
+              "</td>";
+          } else {
+            tr.innerHTML =
+              "<td>" +
+              escapeHtml(r.yearLabel) +
+              "</td><td>" +
+              escapeHtml(formatMoneyCell(r.cashValue)) +
+              "</td><td>" +
+              escapeHtml(r.compoundPct) +
+              "</td><td>" +
+              escapeHtml(r.simplePct) +
+              "</td>";
+          }
           tbody.appendChild(tr);
         });
         table.appendChild(thead);
@@ -1712,34 +1741,24 @@
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
       /**
-       * 构建导出工作表：自 C4 起、C–F 四列紧凑版式；第 5 行整行合并；最后一行四格同画底边（无额外底栏行）。
-       * 不足 30 行时末尾补空行。
-       * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string }[]} rows
+       * 构建导出工作表：自 C4 起；不提取为 C–F 四列，提取为 C–G 五列(K/G 分开展示)。第 5 行整行合并；最后一行各格同画底边。
+       * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null }[]} rows
        */
       function buildStyledYieldSheet(rows) {
         var enc = XLSX.utils.encode_cell;
         var c0 = 2;
-        var cEnd = 5;
+        var isWithdrawExport = getPremiumMode() === "withdraw";
+        var colCount = isWithdrawExport ? 5 : 4;
+        var cEnd = c0 + colCount - 1;
         var blk = { style: "thin", color: { rgb: "FF1A1A1A" } };
         var grayH = { style: "thin", color: { rgb: "FFE0E8F0" } };
-
-        var padded = rows.slice();
-        while (padded.length < 30) {
-          padded.push({
-            yearLabel: "",
-            yearNum: padded.length + 1,
-            cashValue: null,
-            compoundPct: "",
-            simplePct: "",
-          });
-        }
 
         var timeStr = new Date().toLocaleString("zh-CN", { hour12: false });
         var rTitle = 3;
         var rSub = 4;
         var rHead = 5;
         var rData0 = 6;
-        var lastDataR = rData0 + padded.length - 1;
+        var lastDataR = rData0 + rows.length - 1;
 
         var ws = {};
         var merges = [];
@@ -1761,22 +1780,64 @@
         setCell(rSub, c0, subText, "s");
         merges.push({ s: { r: rSub, c: c0 }, e: { r: rSub, c: cEnd } });
 
-        var hdrs = ["保单年度", "预期保单现价", "复利收益率", "单利收益率"];
-        for (var h = 0; h < 4; h++) {
+        var hdrs = isWithdrawExport
+          ? [
+              "保单年度",
+              "K列(累计提取金额)",
+              "G列(提取后剩余价值)",
+              "复利收益率",
+              "单利收益率",
+            ]
+          : ["保单年度", "预期保单现价", "复利收益率", "单利收益率"];
+        for (var h = 0; h < colCount; h++) {
           setCell(rHead, c0 + h, hdrs[h], "s");
         }
 
-        for (var ir = 0; ir < padded.length; ir++) {
+        for (var ir = 0; ir < rows.length; ir++) {
           var rr = rData0 + ir;
-          var rec = padded[ir];
-          var cv =
-            rec.cashValue !== null && isFinite(rec.cashValue) ? rec.cashValue : "";
-          setCell(rr, c0 + 0, rec.yearLabel != null && rec.yearLabel !== "" ? String(rec.yearLabel) : "", "s");
-          var tCash =
-            typeof cv === "number" && isFinite(cv) ? "n" : "s";
-          setCell(rr, c0 + 1, cv === "" ? "" : cv, tCash);
-          setCell(rr, c0 + 2, rec.compoundPct || "", "s");
-          setCell(rr, c0 + 3, rec.simplePct || "", "s");
+          var rec = rows[ir];
+          setCell(
+            rr,
+            c0 + 0,
+            rec.yearLabel != null && rec.yearLabel !== "" ? String(rec.yearLabel) : "",
+            "s"
+          );
+          if (isWithdrawExport) {
+            var vk =
+              rec.valueK !== null &&
+              rec.valueK !== undefined &&
+              isFinite(rec.valueK)
+                ? rec.valueK
+                : "";
+            var vg =
+              rec.valueG !== null &&
+              rec.valueG !== undefined &&
+              isFinite(rec.valueG)
+                ? rec.valueG
+                : "";
+            setCell(
+              rr,
+              c0 + 1,
+              vk === "" ? "" : vk,
+              typeof vk === "number" ? "n" : "s"
+            );
+            setCell(
+              rr,
+              c0 + 2,
+              vg === "" ? "" : vg,
+              typeof vg === "number" ? "n" : "s"
+            );
+            setCell(rr, c0 + 3, rec.compoundPct || "", "s");
+            setCell(rr, c0 + 4, rec.simplePct || "", "s");
+          } else {
+            var cv =
+              rec.cashValue !== null && isFinite(rec.cashValue) ? rec.cashValue : "";
+            var tCash =
+              typeof cv === "number" && isFinite(cv) ? "n" : "s";
+            setCell(rr, c0 + 1, cv === "" ? "" : cv, tCash);
+            setCell(rr, c0 + 2, rec.compoundPct || "", "s");
+            setCell(rr, c0 + 3, rec.simplePct || "", "s");
+          }
         }
 
         ws["!merges"] = merges;
@@ -1784,14 +1845,18 @@
           s: { r: 0, c: 0 },
           e: { r: lastDataR, c: cEnd },
         });
-        ws["!cols"] = [
-          { wch: 3 },
-          { wch: 3 },
-          { wch: 14 },
-          { wch: 16 },
-          { wch: 12 },
-          { wch: 12 },
-        ];
+        ws["!cols"] = [{ wch: 3 }, { wch: 3 }];
+        if (isWithdrawExport) {
+          ws["!cols"].push(
+            { wch: 13 },
+            { wch: 13 },
+            { wch: 13 },
+            { wch: 12 },
+            { wch: 12 }
+          );
+        } else {
+          ws["!cols"].push({ wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 12 });
+        }
         ws["!rows"] = [];
         for (var ri = 0; ri <= lastDataR; ri++) {
           if (ri === rTitle) ws["!rows"][ri] = { hpt: 20 };
@@ -1825,12 +1890,12 @@
           border: { left: blk, right: blk },
         };
 
-        for (var hc = 0; hc < 4; hc++) {
+        for (var hc = 0; hc < colCount; hc++) {
           var cc = c0 + hc;
           var ha = enc({ r: rHead, c: cc });
           var hb = {};
           if (hc === 0) hb.left = blk;
-          if (hc === 3) hb.right = blk;
+          if (hc === colCount - 1) hb.right = blk;
           ws[ha].s = {
             font: {
               bold: true,
@@ -1844,14 +1909,14 @@
           };
         }
 
-        for (var dr = 0; dr < padded.length; dr++) {
+        for (var dr = 0; dr < rows.length; dr++) {
           var rr = rData0 + dr;
           var zebraFill =
             dr % 2 === 0
               ? { patternType: "solid", fgColor: { rgb: "FFFFFFFF" } }
               : { patternType: "solid", fgColor: { rgb: "FFF2F6FB" } };
-          var isLast = dr === padded.length - 1;
-          for (var bc = 0; bc < 4; bc++) {
+          var isLast = dr === rows.length - 1;
+          for (var bc = 0; bc < colCount; bc++) {
             var cc = c0 + bc;
             var addr = enc({ r: rr, c: cc });
             if (!ws[addr]) continue;
@@ -1859,16 +1924,28 @@
               typeof ws[addr].v === "number" && isFinite(ws[addr].v);
             var bdr = {};
             if (bc === 0) bdr.left = blk;
-            if (bc === 3) bdr.right = blk;
+            if (bc === colCount - 1) bdr.right = blk;
             if (isLast) {
               bdr.bottom = blk;
             } else {
               bdr.bottom = grayH;
             }
             var hAlign = "center";
-            if (bc === 0) hAlign = "left";
-            else if (bc === 1) hAlign = "center";
-            else hAlign = "right";
+            if (bc === 0) {
+              hAlign = "left";
+            } else if (isWithdrawExport) {
+              if (bc === 1 || bc === 2) {
+                hAlign = "center";
+              } else {
+                hAlign = "right";
+              }
+            } else {
+              if (bc === 1) {
+                hAlign = "center";
+              } else {
+                hAlign = "right";
+              }
+            }
             var cellStyle = {
               font: { sz: 10, name: "Microsoft YaHei" },
               fill: zebraFill,
@@ -1879,7 +1956,11 @@
               },
               border: bdr,
             };
-            if (bc === 1 && isNum) {
+            if (isWithdrawExport) {
+              if ((bc === 1 || bc === 2) && isNum) {
+                cellStyle.numFmt = "#,##0.00";
+              }
+            } else if (bc === 1 && isNum) {
               cellStyle.numFmt = "#,##0.00";
             }
             ws[addr].s = cellStyle;
@@ -1917,9 +1998,9 @@
                 "」" +
                 extra +
                 prepayNote +
-                "（共 " +
+                "(共 " +
                 out.rows.length +
-                " 行）",
+                " 行)",
               true
             );
             renderTable(lastResultRows);
