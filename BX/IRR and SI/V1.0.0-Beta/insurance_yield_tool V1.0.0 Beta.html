@@ -695,7 +695,7 @@
 
         <h2>保单演示文件</h2>
         <p class="file-schema-note">
-          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = K 列 (累计提取金额)+ G 列(提取后剩余价值)。仅支持 .xlsx / .xls。
+          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。仅支持 .xlsx / .xls。
         </p>
         <input id="file-input" type="file" accept=".xlsx,.xls" />
         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
@@ -903,7 +903,7 @@
         return Number.isFinite(n) && n > 0 ? n : null;
       }
 
-      /** 解析现价单元格(不提取读 E 列；提取为 K 列累计提取金额与 G 列提取后剩余价值，两列数值相加) */
+      /** 解析现价单元格(不提取读 E 列；提取为 G 列累计提取总额与 K 列提取后剩余价值，两列数值相加) */
       function parseCashValueCell(cellVal) {
         if (cellVal === null || cellVal === undefined) return null;
         if (typeof cellVal === "number" && isFinite(cellVal)) return cellVal;
@@ -1741,7 +1741,7 @@
         var withdraw = getPremiumMode() === "withdraw";
         if (withdraw) {
           thead.innerHTML =
-            "<tr><th>保单年度</th><th>K列(累计提取金额)</th><th>G列(提取后剩余价值)</th><th>复利收益率</th><th>单利收益率</th></tr>";
+            "<tr><th>保单年度</th><th>累计提取总额</th><th>提取后剩余价值</th><th>复利收益率</th><th>单利收益率</th></tr>";
         } else {
           thead.innerHTML =
             "<tr><th>保单年度</th><th>预期保单现价</th><th>复利收益率</th><th>单利收益率</th></tr>";
@@ -1754,9 +1754,9 @@
               "<td>" +
               escapeHtml(r.yearLabel) +
               "</td><td>" +
-              escapeHtml(formatMoneyCell(r.valueK)) +
-              "</td><td>" +
               escapeHtml(formatMoneyCell(r.valueG)) +
+              "</td><td>" +
+              escapeHtml(formatMoneyCell(r.valueK)) +
               "</td><td>" +
               escapeHtml(r.compoundPct) +
               "</td><td>" +
@@ -1786,7 +1786,7 @@
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
       /**
-       * 构建导出工作表：自 C4 起；不提取为 C–F 四列，提取为 C–G 五列(K/G 分开展示)。第 5 行整行合并；最后一行各格同画底边。
+       * 构建导出工作表：自 C4 起；不提取为 C–F 四列，提取为 C–G 五列(累计提取总额与提取后剩余价值分开展示)。第 5 行整行合并；最后一行各格同画底边。
        * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null }[]} rows
        */
       function buildStyledYieldSheet(rows) {
@@ -1828,8 +1828,8 @@
         var hdrs = isWithdrawExport
           ? [
               "保单年度",
-              "K列(累计提取金额)",
-              "G列(提取后剩余价值)",
+              "累计提取总额",
+              "提取后剩余价值",
               "复利收益率",
               "单利收益率",
             ]
@@ -1863,14 +1863,14 @@
             setCell(
               rr,
               c0 + 1,
-              vk === "" ? "" : vk,
-              typeof vk === "number" ? "n" : "s"
+              vg === "" ? "" : vg,
+              typeof vg === "number" ? "n" : "s"
             );
             setCell(
               rr,
               c0 + 2,
-              vg === "" ? "" : vg,
-              typeof vg === "number" ? "n" : "s"
+              vk === "" ? "" : vk,
+              typeof vk === "number" ? "n" : "s"
             );
             setCell(rr, c0 + 3, rec.compoundPct || "", "s");
             setCell(rr, c0 + 4, rec.simplePct || "", "s");
