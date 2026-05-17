@@ -54,7 +54,7 @@ python -m http.server 8765
 http://localhost:8765/insurance_yield_tool.html
 ```
 
-> **表格库**：`xlsx-js-style` 已 **写入 HTML 内的 `<script>`**，避免 iOS「文件」打开本地页时 **禁止加载同目录外部 `.js`** 导致 `XLSX` 未定义。仓库中仍保留 `xlsx.min.js` 作为升级表格库时的源文件；**转发给他人时只需发送 HTML**。
+> **表格库**：`xlsx-js-style` 已 **写入 HTML 内的 `<script>`**（体积较大）。**iPhone「文件」里直接点开**时，系统预览对本地超大脚本支持不完整，可能出现**按钮无反应**；请用右上角 **共享 → Safari 或 Microsoft Edge** 用浏览器打开（页面内黄色折叠提示亦会说明）。业务逻辑已放在表格库脚本**之前**执行，以便在受限预览中仍尽量可用。仓库中保留 `xlsx.min.js` 便于维护升级。
 
 ### 3. 在页面中完成计算
 
