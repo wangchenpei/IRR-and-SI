@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>保险演示收益率小工具 · Alpha Wang</title>
+  <title>保险演示收益率 · Alpha Wang</title>
   <!-- 表格库(xlsx-js-style)已内嵌于页面底部 script，避免外网 CDN 与 iOS 本地文件无法加载 sibling .js -->
   <style>
     :root {
@@ -598,7 +598,7 @@
           <span class="brand-avatar-fb" hidden aria-hidden="true">AW</span>
         </div>
         <div class="brand-text">
-          <h1>保险演示收益率小工具</h1>
+          <h1>保险演示收益率</h1>
           <p class="brand-byline">作者 <strong>Alpha Wang</strong></p>
         </div>
       </div>
@@ -610,13 +610,13 @@
       <div class="card">
         <h2>基本参数</h2>
         <div class="field">
-          <label for="nominal-amount">名义保额</label>
+          <label for="nominal-amount">名义总保费</label>
           <input
             id="nominal-amount"
             type="number"
             min="0"
             step="0.01"
-            placeholder="请输入名义保额"
+            placeholder="请输入名义总保费"
             autocomplete="off"
           />
           <p class="field-hint">数值单位与后续演示表保持一致(如元)。</p>
@@ -751,12 +751,6 @@
       </div>
     </div>
   </div>
-
-  <footer class="next-info">
-    <p class="browser-compat-note">
-      建议使用 Chrome、Firefox、Safari、Microsoft Edge 等近年版本；需启用 JavaScript 与 FileReader。表格库已<strong>内嵌在本页</strong>。<strong>若在 iPhone「文件」中直接点开无反应</strong>，请点右上角<strong>共享</strong>图标，选择<strong>「Safari」或「Microsoft Edge」</strong>再打开（系统预览对本地超大脚本支持不完整，用浏览器打开即可）。
-    </p>
-  </footer>
 
   <!-- 业务逻辑先于下方表格库脚本：iOS「文件」预览若解析巨型 xlsx 失败，仍可使用「确认」等交互 -->
   <!-- xlsx-js-style 基于 SheetJS CE；商用交付前请自行核对许可证是否适用 -->
@@ -914,7 +908,7 @@
         return isFinite(x) ? x : null;
       }
 
-      /** 每年实缴保费：名义保额/缴费年限 × (1 - 该年折扣%) */
+      /** 每年实缴保费：名义总保费/缴费年限 × (1 - 该年折扣%) */
       function buildAnnualPremiums(nominal, payYears, discounts) {
         var base = nominal / payYears;
         var arr = [];
@@ -1007,7 +1001,7 @@
 
       /**
        * 预缴口径：预缴优惠为对「年缴份额」的百分比(如 68 即 68%)。
-       * 年缴份额 = 名义保额÷缴费年限；少交 = 年缴份额×(预缴优惠÷100)；一次性保费 P = 名义保额 − 少交。
+       * 年缴份额 = 名义总保费÷缴费年限；少交 = 年缴份额×(预缴优惠÷100)；一次性保费 P = 名义总保费 − 少交。
        * 复利：S = P(1+x)^N → x = (S/P)^(1/N) − 1。
        */
       function solvePrepayCompound(S, N, premiumLump) {
@@ -1032,7 +1026,7 @@
       }
 
       /**
-       * 预缴折算一次性保费(与名义保额同单位)。
+       * 预缴折算一次性保费(与名义总保费同单位)。
        * prepayBonusPct：百分比数值，如 68 表示 68%。
        */
       function buildPrepayLumpPremium(nominal, payYears, prepayBonusPct) {
@@ -1097,7 +1091,7 @@
           !bizParams.nominalAmount ||
           !bizParams.payYears
         ) {
-          return { rows: [], err: "请先点击「确认」完成名义保额、缴费年限与各年折扣。" };
+          return { rows: [], err: "请先点击「确认」完成名义总保费、缴费年限与各年折扣。" };
         }
         if (bizParams.yearDiscounts.length !== bizParams.payYears) {
           return { rows: [], err: "各年折扣数量与缴费年限不一致，请重新确认基本参数。" };
@@ -1128,7 +1122,7 @@
             return {
               rows: [],
               err:
-                "按公式折算的一次性保费须大于 0：保费 = 名义保额 −(名义保额÷缴费年限)×(预缴优惠÷100)。预缴优惠过大时少交金额会≥名义保额，请调小百分比。",
+                "按公式折算的一次性保费须大于 0：保费 = 名义总保费 −(名义总保费÷缴费年限)×(预缴优惠÷100)。预缴优惠过大时少交金额会≥名义总保费，请调小百分比。",
             };
           }
           for (var ip = 0; ip < ext.rows.length; ip++) {
@@ -1280,7 +1274,7 @@
       }
 
       /**
-       * 写入已确认的名义保额、缴费年限与各年折扣，并刷新预缴提示与按钮状态。
+       * 写入已确认的名义总保费、缴费年限与各年折扣，并刷新预缴提示与按钮状态。
        * @param {boolean} compactDiscountMsg 为 true 时不逐年列出(用于「无折扣」全 0)。
        */
       function commitConfirmedBaseParams(nominal, payYears, discountsArray, compactDiscountMsg) {
@@ -1313,7 +1307,7 @@
           discountSentence = "各年折扣：" + parts.join("；") + "。";
         }
         setBaseParamsStatus(
-          "已确认：名义保额 " +
+          "已确认：名义总保费 " +
             nomDisp +
             "，缴费年限 " +
             bizParams.payYears +
@@ -1502,7 +1496,7 @@
       discountModalCancel.addEventListener("click", function () {
         closeDiscountModal();
         setBaseParamsStatus(
-          "已取消年度折扣录入。可修改名义保额或缴费年限后，再次点击「确认」。",
+          "已取消年度折扣录入。可修改名义总保费或缴费年限后，再次点击「确认」。",
           false
         );
       });
@@ -1555,7 +1549,7 @@
         var nom = parseFloat(String(nominalInput.value).trim().replace(",", "."));
         var years = parseInt(String(payYearsInput.value).trim(), 10);
         if (!isFinite(nom) || nom <= 0) {
-          setBaseParamsStatus("请填写有效的名义保额(须大于 0)。", false);
+          setBaseParamsStatus("请填写有效的名义总保费(须大于 0)。", false);
           nominalInput.focus();
           return;
         }
@@ -1782,7 +1776,7 @@
       }
 
       /** 导出封面与页内标题一致 */
-      var EXPORT_TOOL_TITLE = "保险演示收益率小工具";
+      var EXPORT_TOOL_TITLE = "保险演示收益率";
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
       /**
