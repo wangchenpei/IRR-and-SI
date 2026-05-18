@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>保险演示收益率小工具 · Alpha Wang</title>
+  <title>保险演示收益率 · Alpha Wang</title>
   <!-- 表格库(xlsx-js-style)已内嵌于页面底部 script，避免外网 CDN 与 iOS 本地文件无法加载 sibling .js -->
   <style>
     :root {
@@ -150,6 +150,47 @@
       color: var(--accent);
       font-weight: 650;
     }
+
+    /* 左侧「基本参数」：区块间距略加大，避免上下过挤 */
+    .card-basic-params {
+      padding: 14px 12px 13px;
+    }
+    .card-basic-params > h2 {
+      margin-bottom: 12px;
+    }
+    .card-basic-params > .field {
+      margin-bottom: 15px;
+    }
+    .card-basic-params .field-hint {
+      margin-top: 6px;
+    }
+    .card-basic-params .prepay-choice-field > fieldset.mode-group {
+      margin-bottom: 0;
+      padding: 8px 11px 7px;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+    }
+    .card-basic-params #prepay-bonus-row {
+      margin-top: 11px;
+    }
+    .card-basic-params #year-discount-block {
+      margin-top: 11px;
+    }
+    .card-basic-params #year-discount-block > .field {
+      margin-bottom: 0;
+    }
+    .card-basic-params > .btn-row {
+      margin-top: 14px;
+    }
+    .card-basic-params > .params-summary {
+      margin-top: 11px;
+    }
+
     fieldset.mode-group {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -189,6 +230,21 @@
       font-size: 0.8rem;
       font-weight: 600;
       color: var(--text);
+    }
+
+    /* 「是否预缴」两档横排：两列网格，始终左右并排 */
+    .mode-options-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 8px 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .mode-options-row .mode-option {
+      min-width: 0;
+      margin-bottom: 0;
+      align-items: center;
     }
 
     #file-input {
@@ -524,6 +580,15 @@
       font-size: 0.88rem;
     }
 
+    .year-discount-block.is-disabled {
+      opacity: 0.55;
+      pointer-events: none;
+      user-select: none;
+    }
+    .year-discount-block.is-disabled input[type="checkbox"] {
+      cursor: not-allowed;
+    }
+
     footer.next-info {
       max-width: 1400px;
       margin: 1mm auto 4mm;
@@ -598,7 +663,7 @@
           <span class="brand-avatar-fb" hidden aria-hidden="true">AW</span>
         </div>
         <div class="brand-text">
-          <h1>保险演示收益率小工具</h1>
+          <h1>保险演示收益率</h1>
           <p class="brand-byline">作者 <strong>Alpha Wang</strong></p>
         </div>
       </div>
@@ -607,19 +672,50 @@
 
   <div class="shell">
     <section class="pane pane-input" aria-label="输入区">
-      <div class="card">
+      <div class="card card-basic-params">
         <h2>基本参数</h2>
         <div class="field">
-          <label for="nominal-amount">名义保额</label>
+          <label for="nominal-amount">名义总保费</label>
           <input
             id="nominal-amount"
             type="number"
             min="0"
             step="0.01"
-            placeholder="请输入名义保额"
+            placeholder="请输入名义总保费"
             autocomplete="off"
           />
           <p class="field-hint">数值单位与后续演示表保持一致(如元)。</p>
+        </div>
+        <div class="field prepay-choice-field">
+          <fieldset class="mode-group">
+            <legend>是否预缴</legend>
+            <div class="mode-options-row" role="presentation">
+              <label class="mode-option">
+                <input type="radio" name="prepay_mode" value="no_prepay" checked />
+                <span>
+                  <strong>不预缴</strong>
+                </span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="prepay_mode" value="prepay" />
+                <span>
+                  <strong>预缴</strong>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+          <div id="prepay-bonus-row" hidden>
+            <label for="prepay-bonus">预缴优惠(%)</label>
+            <input
+              id="prepay-bonus"
+              type="number"
+              step="0.01"
+              placeholder="如 68 表示 68%"
+              autocomplete="off"
+            />
+            <p class="field-hint">预缴优惠为年化百分比折扣。</p>
+            <p id="prepay-lump-hint" class="field-hint prepay-lump-hint" aria-live="polite"></p>
+          </div>
         </div>
         <div class="field">
           <label for="pay-years">缴费年限(年)</label>
@@ -632,51 +728,19 @@
             placeholder="例如 5"
             autocomplete="off"
           />
-          <p class="field-hint" id="pay-years-discount-hint">
-            勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣(%，默认为 0%)。
-          </p>
+          <div id="year-discount-block" class="year-discount-block">
+            <div class="field" style="margin-bottom: 0">
+              <label for="no-year-discount" class="field-inline-check">
+                <input type="checkbox" id="no-year-discount" />
+                无折扣
+              </label>
+            </div>
+          </div>
         </div>
-        <div class="field" style="margin-bottom: 2px">
-          <label for="no-year-discount" class="field-inline-check">
-            <input type="checkbox" id="no-year-discount" />
-            无折扣
-          </label>
-        </div>
-        <div class="btn-row" style="margin-top: 6px">
+        <div class="btn-row">
           <button type="button" id="btn-confirm-base" class="btn btn-primary">确认</button>
         </div>
         <div id="base-params-status" class="params-summary" aria-live="polite"></div>
-      </div>
-
-      <div class="card">
-        <h2>预缴设置</h2>
-        <fieldset class="mode-group" style="margin-bottom: 0">
-          <legend>请选择</legend>
-          <label class="mode-option">
-            <input type="radio" name="prepay_mode" value="no_prepay" checked />
-            <span>
-              <strong>不预缴</strong>
-            </span>
-          </label>
-          <label class="mode-option">
-            <input type="radio" name="prepay_mode" value="prepay" />
-            <span>
-              <strong>预缴</strong>
-            </span>
-          </label>
-        </fieldset>
-        <div id="prepay-bonus-row" hidden>
-          <label for="prepay-bonus">预缴优惠(%)</label>
-          <input
-            id="prepay-bonus"
-            type="number"
-            step="0.01"
-            placeholder="如 68 表示 68%"
-            autocomplete="off"
-          />
-          <p class="field-hint">预缴优惠为年化百分比折扣。</p>
-          <p id="prepay-lump-hint" class="field-hint prepay-lump-hint" aria-live="polite"></p>
-        </div>
       </div>
 
       <div class="card">
@@ -717,7 +781,7 @@
       <div class="card" style="margin: 0; padding: 0; overflow: hidden">
         <div id="table-container" class="table-wrap">
           <div class="placeholder-hint" id="placeholder">
-            请确认基本参数(不预缴或预缴并填写预缴优惠)，选择「不提取」或「提取」，上传演示表后点击「开始计算」。
+            请确认基本参数（含是否预缴），选择「不提取」或「提取」，上传演示表后点击「开始计算」。
           </div>
         </div>
       </div>
@@ -751,12 +815,6 @@
       </div>
     </div>
   </div>
-
-  <footer class="next-info">
-    <p class="browser-compat-note">
-      建议使用 Chrome、Firefox、Safari、Microsoft Edge 等近年版本；需启用 JavaScript 与 FileReader。表格库已<strong>内嵌在本页</strong>。<strong>若在 iPhone「文件」中直接点开无反应</strong>，请点右上角<strong>共享</strong>图标，选择<strong>「Safari」或「Microsoft Edge」</strong>再打开（系统预览对本地超大脚本支持不完整，用浏览器打开即可）。
-    </p>
-  </footer>
 
   <!-- 业务逻辑先于下方表格库脚本：iOS「文件」预览若解析巨型 xlsx 失败，仍可使用「确认」等交互 -->
   <!-- xlsx-js-style 基于 SheetJS CE；商用交付前请自行核对许可证是否适用 -->
@@ -870,13 +928,15 @@
             }
           }
         }
+        var yearDiscountsOk =
+          getPrepayMode() || bizParams.yearDiscounts.length === bizParams.payYears;
         var ok =
           prepayOk &&
           !!currentFile &&
           bizParams.baseConfirmed &&
           bizParams.nominalAmount > 0 &&
           bizParams.payYears > 0 &&
-          bizParams.yearDiscounts.length === bizParams.payYears;
+          yearDiscountsOk;
         btnRun.disabled = !ok;
         refreshPrepayLumpHint();
       }
@@ -914,7 +974,7 @@
         return isFinite(x) ? x : null;
       }
 
-      /** 每年实缴保费：名义保额/缴费年限 × (1 - 该年折扣%) */
+      /** 每年实缴保费：名义总保费/缴费年限 × (1 - 该年折扣%) */
       function buildAnnualPremiums(nominal, payYears, discounts) {
         var base = nominal / payYears;
         var arr = [];
@@ -1007,7 +1067,7 @@
 
       /**
        * 预缴口径：预缴优惠为对「年缴份额」的百分比(如 68 即 68%)。
-       * 年缴份额 = 名义保额÷缴费年限；少交 = 年缴份额×(预缴优惠÷100)；一次性保费 P = 名义保额 − 少交。
+       * 年缴份额 = 名义总保费÷缴费年限；少交 = 年缴份额×(预缴优惠÷100)；一次性保费 P = 名义总保费 − 少交。
        * 复利：S = P(1+x)^N → x = (S/P)^(1/N) − 1。
        */
       function solvePrepayCompound(S, N, premiumLump) {
@@ -1032,7 +1092,7 @@
       }
 
       /**
-       * 预缴折算一次性保费(与名义保额同单位)。
+       * 预缴折算一次性保费(与名义总保费同单位)。
        * prepayBonusPct：百分比数值，如 68 表示 68%。
        */
       function buildPrepayLumpPremium(nominal, payYears, prepayBonusPct) {
@@ -1097,9 +1157,14 @@
           !bizParams.nominalAmount ||
           !bizParams.payYears
         ) {
-          return { rows: [], err: "请先点击「确认」完成名义保额、缴费年限与各年折扣。" };
+          return {
+            rows: [],
+            err: getPrepayMode()
+              ? "请先点击「确认」完成名义总保费与缴费年限。"
+              : "请先点击「确认」完成名义总保费、缴费年限与各年折扣。",
+          };
         }
-        if (bizParams.yearDiscounts.length !== bizParams.payYears) {
+        if (!getPrepayMode() && bizParams.yearDiscounts.length !== bizParams.payYears) {
           return { rows: [], err: "各年折扣数量与缴费年限不一致，请重新确认基本参数。" };
         }
 
@@ -1128,7 +1193,7 @@
             return {
               rows: [],
               err:
-                "按公式折算的一次性保费须大于 0：保费 = 名义保额 −(名义保额÷缴费年限)×(预缴优惠÷100)。预缴优惠过大时少交金额会≥名义保额，请调小百分比。",
+                "按公式折算的一次性保费须大于 0：保费 = 名义总保费 −(名义总保费÷缴费年限)×(预缴优惠÷100)。预缴优惠过大时少交金额会≥名义总保费，请调小百分比。",
             };
           }
           for (var ip = 0; ip < ext.rows.length; ip++) {
@@ -1248,14 +1313,34 @@
         return !!(el && el.value === "prepay");
       }
 
+      function applyYearDiscountBlockState() {
+        var block = document.getElementById("year-discount-block");
+        if (!block || !noYearDiscountInput) {
+          return;
+        }
+        var prepay = getPrepayMode();
+        block.classList.toggle("is-disabled", prepay);
+        block.setAttribute("aria-disabled", prepay ? "true" : "false");
+        noYearDiscountInput.disabled = prepay;
+      }
+
       function updatePrepayBonusVisibility() {
         prepayBonusRow.hidden = !getPrepayMode();
+        applyYearDiscountBlockState();
       }
 
       (function () {
         var prepEls = document.querySelectorAll('input[name="prepay_mode"]');
         for (var pi = 0; pi < prepEls.length; pi++) {
           prepEls[pi].addEventListener("change", function () {
+            if (discountModalOverlay.classList.contains("open")) {
+              closeDiscountModal();
+            }
+            invalidateBaseParams();
+            setBaseParamsStatus(
+              "「预缴」设置已变更，请重新点击「确认」更新基本参数。",
+              false
+            );
             updatePrepayBonusVisibility();
             syncPrepayBonusToBiz();
             updateRunButtonState();
@@ -1280,8 +1365,8 @@
       }
 
       /**
-       * 写入已确认的名义保额、缴费年限与各年折扣，并刷新预缴提示与按钮状态。
-       * @param {boolean} compactDiscountMsg 为 true 时不逐年列出(用于「无折扣」全 0)。
+       * 写入已确认的名义总保费、缴费年限；不预缴时含各年折扣，预缴时仅登记预缴口径。
+       * @param {boolean} compactDiscountMsg 为 true 时不逐年列出(用于「无折扣」全 0；预缴时内部亦存全 0 折扣向量)。
        */
       function commitConfirmedBaseParams(nominal, payYears, discountsArray, compactDiscountMsg) {
         bizParams.nominalAmount = nominal;
@@ -1297,7 +1382,10 @@
               })
             : String(bizParams.nominalAmount);
         var discountSentence;
-        if (compactDiscountMsg) {
+        if (getPrepayMode()) {
+          discountSentence =
+            "预缴模式：按「预缴优惠」一次性折算保费，不单独录入各年折扣。";
+        } else if (compactDiscountMsg) {
           discountSentence = "各年折扣均为 0%。";
         } else {
           var parts = [];
@@ -1313,7 +1401,7 @@
           discountSentence = "各年折扣：" + parts.join("；") + "。";
         }
         setBaseParamsStatus(
-          "已确认：名义保额 " +
+          "已确认：名义总保费 " +
             nomDisp +
             "，缴费年限 " +
             bizParams.payYears +
@@ -1379,6 +1467,9 @@
 
       if (noYearDiscountInput) {
         noYearDiscountInput.addEventListener("change", function () {
+          if (getPrepayMode()) {
+            return;
+          }
           if (discountModalOverlay.classList.contains("open")) {
             closeDiscountModal();
           }
@@ -1502,7 +1593,7 @@
       discountModalCancel.addEventListener("click", function () {
         closeDiscountModal();
         setBaseParamsStatus(
-          "已取消年度折扣录入。可修改名义保额或缴费年限后，再次点击「确认」。",
+          "已取消年度折扣录入。可修改名义总保费或缴费年限后，再次点击「确认」。",
           false
         );
       });
@@ -1555,13 +1646,22 @@
         var nom = parseFloat(String(nominalInput.value).trim().replace(",", "."));
         var years = parseInt(String(payYearsInput.value).trim(), 10);
         if (!isFinite(nom) || nom <= 0) {
-          setBaseParamsStatus("请填写有效的名义保额(须大于 0)。", false);
+          setBaseParamsStatus("请填写有效的名义总保费(须大于 0)。", false);
           nominalInput.focus();
           return;
         }
         if (!Number.isInteger(years) || years < 1 || years > 120) {
           setBaseParamsStatus("请填写有效的缴费年限(1～120 的整数)。", false);
           payYearsInput.focus();
+          return;
+        }
+        if (getPrepayMode()) {
+          closeDiscountModal();
+          var zeroPrepay = [];
+          for (var pi0 = 0; pi0 < years; pi0++) {
+            zeroPrepay.push(0);
+          }
+          commitConfirmedBaseParams(nom, years, zeroPrepay, true);
           return;
         }
         if (noYearDiscountInput && noYearDiscountInput.checked) {
@@ -1685,7 +1785,7 @@
         ph.className = "placeholder-hint";
         ph.id = "placeholder";
         ph.textContent =
-          "请确认基本参数(不预缴或预缴并填写预缴优惠)，选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
+          "请确认基本参数（含是否预缴），选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
         tableContainer.appendChild(ph);
       }
 
@@ -1782,7 +1882,7 @@
       }
 
       /** 导出封面与页内标题一致 */
-      var EXPORT_TOOL_TITLE = "保险演示收益率小工具";
+      var EXPORT_TOOL_TITLE = "保险演示收益率";
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
       /**
