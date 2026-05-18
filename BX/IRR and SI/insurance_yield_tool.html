@@ -150,6 +150,47 @@
       color: var(--accent);
       font-weight: 650;
     }
+
+    /* 左侧「基本参数」：区块间距略加大，避免上下过挤 */
+    .card-basic-params {
+      padding: 14px 12px 13px;
+    }
+    .card-basic-params > h2 {
+      margin-bottom: 12px;
+    }
+    .card-basic-params > .field {
+      margin-bottom: 15px;
+    }
+    .card-basic-params .field-hint {
+      margin-top: 6px;
+    }
+    .card-basic-params .prepay-choice-field > fieldset.mode-group {
+      margin-bottom: 0;
+      padding: 8px 11px 7px;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+    }
+    .card-basic-params #prepay-bonus-row {
+      margin-top: 11px;
+    }
+    .card-basic-params #year-discount-block {
+      margin-top: 11px;
+    }
+    .card-basic-params #year-discount-block > .field {
+      margin-bottom: 0;
+    }
+    .card-basic-params > .btn-row {
+      margin-top: 14px;
+    }
+    .card-basic-params > .params-summary {
+      margin-top: 11px;
+    }
+
     fieldset.mode-group {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -189,6 +230,21 @@
       font-size: 0.8rem;
       font-weight: 600;
       color: var(--text);
+    }
+
+    /* 「是否预缴」两档横排：两列网格，始终左右并排 */
+    .mode-options-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 8px 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .mode-options-row .mode-option {
+      min-width: 0;
+      margin-bottom: 0;
+      align-items: center;
     }
 
     #file-input {
@@ -616,7 +672,7 @@
 
   <div class="shell">
     <section class="pane pane-input" aria-label="输入区">
-      <div class="card">
+      <div class="card card-basic-params">
         <h2>基本参数</h2>
         <div class="field">
           <label for="nominal-amount">名义总保费</label>
@@ -630,6 +686,37 @@
           />
           <p class="field-hint">数值单位与后续演示表保持一致(如元)。</p>
         </div>
+        <div class="field prepay-choice-field">
+          <fieldset class="mode-group">
+            <legend>是否预缴</legend>
+            <div class="mode-options-row" role="presentation">
+              <label class="mode-option">
+                <input type="radio" name="prepay_mode" value="no_prepay" checked />
+                <span>
+                  <strong>不预缴</strong>
+                </span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="prepay_mode" value="prepay" />
+                <span>
+                  <strong>预缴</strong>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+          <div id="prepay-bonus-row" hidden>
+            <label for="prepay-bonus">预缴优惠(%)</label>
+            <input
+              id="prepay-bonus"
+              type="number"
+              step="0.01"
+              placeholder="如 68 表示 68%"
+              autocomplete="off"
+            />
+            <p class="field-hint">预缴优惠为年化百分比折扣。</p>
+            <p id="prepay-lump-hint" class="field-hint prepay-lump-hint" aria-live="polite"></p>
+          </div>
+        </div>
         <div class="field">
           <label for="pay-years">缴费年限(年)</label>
           <input
@@ -642,10 +729,7 @@
             autocomplete="off"
           />
           <div id="year-discount-block" class="year-discount-block">
-            <p class="field-hint" id="pay-years-discount-hint">
-              勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣(%，默认为 0%)。
-            </p>
-            <div class="field" style="margin-bottom: 2px">
+            <div class="field" style="margin-bottom: 0">
               <label for="no-year-discount" class="field-inline-check">
                 <input type="checkbox" id="no-year-discount" />
                 无折扣
@@ -653,43 +737,10 @@
             </div>
           </div>
         </div>
-        <div class="btn-row" style="margin-top: 6px">
+        <div class="btn-row">
           <button type="button" id="btn-confirm-base" class="btn btn-primary">确认</button>
         </div>
         <div id="base-params-status" class="params-summary" aria-live="polite"></div>
-      </div>
-
-      <div class="card">
-        <h2>预缴设置</h2>
-        <fieldset class="mode-group" style="margin-bottom: 0">
-          <legend>请选择</legend>
-          <label class="mode-option">
-            <input type="radio" name="prepay_mode" value="no_prepay" checked />
-            <span>
-              <strong>不预缴</strong>
-            </span>
-          </label>
-          <label class="mode-option">
-            <input type="radio" name="prepay_mode" value="prepay" />
-            <span>
-              <strong>预缴</strong>
-            </span>
-          </label>
-        </fieldset>
-        <div id="prepay-bonus-row" hidden>
-          <label for="prepay-bonus">预缴优惠(%)</label>
-          <input
-            id="prepay-bonus"
-            type="number"
-            step="0.01"
-            placeholder="如 68 表示 68%"
-            autocomplete="off"
-          />
-          <p class="field-hint">
-            预缴优惠为年化百分比折扣。与「不预缴」下按年录入的各年折扣<strong>二选一</strong>：选择预缴后，基本参数处不再录入各年折扣。
-          </p>
-          <p id="prepay-lump-hint" class="field-hint prepay-lump-hint" aria-live="polite"></p>
-        </div>
       </div>
 
       <div class="card">
@@ -730,7 +781,7 @@
       <div class="card" style="margin: 0; padding: 0; overflow: hidden">
         <div id="table-container" class="table-wrap">
           <div class="placeholder-hint" id="placeholder">
-            请确认基本参数与预缴设置，选择「不提取」或「提取」，上传演示表后点击「开始计算」。
+            请确认基本参数（含是否预缴），选择「不提取」或「提取」，上传演示表后点击「开始计算」。
           </div>
         </div>
       </div>
@@ -1264,21 +1315,13 @@
 
       function applyYearDiscountBlockState() {
         var block = document.getElementById("year-discount-block");
-        var hint = document.getElementById("pay-years-discount-hint");
-        if (!block || !hint || !noYearDiscountInput) {
+        if (!block || !noYearDiscountInput) {
           return;
         }
         var prepay = getPrepayMode();
         block.classList.toggle("is-disabled", prepay);
         block.setAttribute("aria-disabled", prepay ? "true" : "false");
         noYearDiscountInput.disabled = prepay;
-        if (prepay) {
-          hint.textContent =
-            "选择「预缴」时，下方「预缴优惠」已综合体现折扣口径，此处不再录入各年折扣。请点击「确认」登记名义总保费与缴费年限。";
-        } else {
-          hint.textContent =
-            "勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣(%，默认为 0%)。";
-        }
       }
 
       function updatePrepayBonusVisibility() {
@@ -1742,7 +1785,7 @@
         ph.className = "placeholder-hint";
         ph.id = "placeholder";
         ph.textContent =
-          "请确认基本参数与预缴设置，选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
+          "请确认基本参数（含是否预缴），选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
         tableContainer.appendChild(ph);
       }
 
