@@ -524,6 +524,15 @@
       font-size: 0.88rem;
     }
 
+    .year-discount-block.is-disabled {
+      opacity: 0.55;
+      pointer-events: none;
+      user-select: none;
+    }
+    .year-discount-block.is-disabled input[type="checkbox"] {
+      cursor: not-allowed;
+    }
+
     footer.next-info {
       max-width: 1400px;
       margin: 1mm auto 4mm;
@@ -632,15 +641,17 @@
             placeholder="例如 5"
             autocomplete="off"
           />
-          <p class="field-hint" id="pay-years-discount-hint">
-            勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣(%，默认为 0%)。
-          </p>
-        </div>
-        <div class="field" style="margin-bottom: 2px">
-          <label for="no-year-discount" class="field-inline-check">
-            <input type="checkbox" id="no-year-discount" />
-            无折扣
-          </label>
+          <div id="year-discount-block" class="year-discount-block">
+            <p class="field-hint" id="pay-years-discount-hint">
+              勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣(%，默认为 0%)。
+            </p>
+            <div class="field" style="margin-bottom: 2px">
+              <label for="no-year-discount" class="field-inline-check">
+                <input type="checkbox" id="no-year-discount" />
+                无折扣
+              </label>
+            </div>
+          </div>
         </div>
         <div class="btn-row" style="margin-top: 6px">
           <button type="button" id="btn-confirm-base" class="btn btn-primary">确认</button>
@@ -674,7 +685,9 @@
             placeholder="如 68 表示 68%"
             autocomplete="off"
           />
-          <p class="field-hint">预缴优惠为年化百分比折扣。</p>
+          <p class="field-hint">
+            预缴优惠为年化百分比折扣。与「不预缴」下按年录入的各年折扣<strong>二选一</strong>：选择预缴后，基本参数处不再录入各年折扣。
+          </p>
           <p id="prepay-lump-hint" class="field-hint prepay-lump-hint" aria-live="polite"></p>
         </div>
       </div>
@@ -717,7 +730,7 @@
       <div class="card" style="margin: 0; padding: 0; overflow: hidden">
         <div id="table-container" class="table-wrap">
           <div class="placeholder-hint" id="placeholder">
-            请确认基本参数(不预缴或预缴并填写预缴优惠)，选择「不提取」或「提取」，上传演示表后点击「开始计算」。
+            请确认基本参数与预缴设置，选择「不提取」或「提取」，上传演示表后点击「开始计算」。
           </div>
         </div>
       </div>
@@ -864,13 +877,15 @@
             }
           }
         }
+        var yearDiscountsOk =
+          getPrepayMode() || bizParams.yearDiscounts.length === bizParams.payYears;
         var ok =
           prepayOk &&
           !!currentFile &&
           bizParams.baseConfirmed &&
           bizParams.nominalAmount > 0 &&
           bizParams.payYears > 0 &&
-          bizParams.yearDiscounts.length === bizParams.payYears;
+          yearDiscountsOk;
         btnRun.disabled = !ok;
         refreshPrepayLumpHint();
       }
@@ -1091,9 +1106,14 @@
           !bizParams.nominalAmount ||
           !bizParams.payYears
         ) {
-          return { rows: [], err: "请先点击「确认」完成名义总保费、缴费年限与各年折扣。" };
+          return {
+            rows: [],
+            err: getPrepayMode()
+              ? "请先点击「确认」完成名义总保费与缴费年限。"
+              : "请先点击「确认」完成名义总保费、缴费年限与各年折扣。",
+          };
         }
-        if (bizParams.yearDiscounts.length !== bizParams.payYears) {
+        if (!getPrepayMode() && bizParams.yearDiscounts.length !== bizParams.payYears) {
           return { rows: [], err: "各年折扣数量与缴费年限不一致，请重新确认基本参数。" };
         }
 
@@ -1242,14 +1262,42 @@
         return !!(el && el.value === "prepay");
       }
 
+      function applyYearDiscountBlockState() {
+        var block = document.getElementById("year-discount-block");
+        var hint = document.getElementById("pay-years-discount-hint");
+        if (!block || !hint || !noYearDiscountInput) {
+          return;
+        }
+        var prepay = getPrepayMode();
+        block.classList.toggle("is-disabled", prepay);
+        block.setAttribute("aria-disabled", prepay ? "true" : "false");
+        noYearDiscountInput.disabled = prepay;
+        if (prepay) {
+          hint.textContent =
+            "选择「预缴」时，下方「预缴优惠」已综合体现折扣口径，此处不再录入各年折扣。请点击「确认」登记名义总保费与缴费年限。";
+        } else {
+          hint.textContent =
+            "勾选「无折扣」时，点击「确认」将各年折扣置为 0% ；未勾选时，确认后按年弹出对话框录入折扣(%，默认为 0%)。";
+        }
+      }
+
       function updatePrepayBonusVisibility() {
         prepayBonusRow.hidden = !getPrepayMode();
+        applyYearDiscountBlockState();
       }
 
       (function () {
         var prepEls = document.querySelectorAll('input[name="prepay_mode"]');
         for (var pi = 0; pi < prepEls.length; pi++) {
           prepEls[pi].addEventListener("change", function () {
+            if (discountModalOverlay.classList.contains("open")) {
+              closeDiscountModal();
+            }
+            invalidateBaseParams();
+            setBaseParamsStatus(
+              "「预缴」设置已变更，请重新点击「确认」更新基本参数。",
+              false
+            );
             updatePrepayBonusVisibility();
             syncPrepayBonusToBiz();
             updateRunButtonState();
@@ -1274,8 +1322,8 @@
       }
 
       /**
-       * 写入已确认的名义总保费、缴费年限与各年折扣，并刷新预缴提示与按钮状态。
-       * @param {boolean} compactDiscountMsg 为 true 时不逐年列出(用于「无折扣」全 0)。
+       * 写入已确认的名义总保费、缴费年限；不预缴时含各年折扣，预缴时仅登记预缴口径。
+       * @param {boolean} compactDiscountMsg 为 true 时不逐年列出(用于「无折扣」全 0；预缴时内部亦存全 0 折扣向量)。
        */
       function commitConfirmedBaseParams(nominal, payYears, discountsArray, compactDiscountMsg) {
         bizParams.nominalAmount = nominal;
@@ -1291,7 +1339,10 @@
               })
             : String(bizParams.nominalAmount);
         var discountSentence;
-        if (compactDiscountMsg) {
+        if (getPrepayMode()) {
+          discountSentence =
+            "预缴模式：按「预缴优惠」一次性折算保费，不单独录入各年折扣。";
+        } else if (compactDiscountMsg) {
           discountSentence = "各年折扣均为 0%。";
         } else {
           var parts = [];
@@ -1373,6 +1424,9 @@
 
       if (noYearDiscountInput) {
         noYearDiscountInput.addEventListener("change", function () {
+          if (getPrepayMode()) {
+            return;
+          }
           if (discountModalOverlay.classList.contains("open")) {
             closeDiscountModal();
           }
@@ -1558,6 +1612,15 @@
           payYearsInput.focus();
           return;
         }
+        if (getPrepayMode()) {
+          closeDiscountModal();
+          var zeroPrepay = [];
+          for (var pi0 = 0; pi0 < years; pi0++) {
+            zeroPrepay.push(0);
+          }
+          commitConfirmedBaseParams(nom, years, zeroPrepay, true);
+          return;
+        }
         if (noYearDiscountInput && noYearDiscountInput.checked) {
           closeDiscountModal();
           var zeroDiscounts = [];
@@ -1679,7 +1742,7 @@
         ph.className = "placeholder-hint";
         ph.id = "placeholder";
         ph.textContent =
-          "请确认基本参数(不预缴或预缴并填写预缴优惠)，选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
+          "请确认基本参数与预缴设置，选择「不提取」或「提取」，上传演示表后点击「开始计算」。";
         tableContainer.appendChild(ph);
       }
 
