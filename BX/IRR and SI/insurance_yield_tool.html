@@ -693,29 +693,6 @@
       color: var(--muted);
       line-height: 1.42;
     }
-    html.app-booted .iphone-files-hint {
-      display: none;
-    }
-    .iphone-files-hint {
-      box-sizing: border-box;
-      width: calc(100% - 2 * var(--page-margin));
-      max-width: 1400px;
-      margin: 8px auto 0;
-      padding: 10px 12px;
-      font-size: 0.78rem;
-      line-height: 1.45;
-      color: #5c3a06;
-      background: linear-gradient(160deg, #fff8e6, #ffefd0);
-      border: 1px solid #e0a82a;
-      border-radius: 8px;
-    }
-    .iphone-files-hint summary {
-      cursor: pointer;
-      font-weight: 650;
-    }
-    .iphone-files-hint p {
-      margin: 8px 0 0;
-    }
     #xlsx-load-error {
       display: none;
       margin: 0 var(--page-margin) 6px;
@@ -730,13 +707,6 @@
   </style>
 </head>
 <body>
-  <details class="iphone-files-hint">
-    <summary>iPhone「文件」里打开若按钮没反应</summary>
-    <p>
-      请先点右上角<strong>共享</strong>，选择 <strong>Safari</strong> 或
-      <strong>Microsoft Edge</strong> 打开本 HTML。系统自带的文件预览对本地超大脚本支持不完整；用浏览器打开后「确认」「开始计算」等即可正常使用。
-    </p>
-  </details>
   <div id="xlsx-load-error" role="alert"></div>
   <header class="app-head">
     <div class="app-head-inner">
@@ -931,13 +901,10 @@
     </div>
   </div>
 
-  <!-- 业务逻辑先于下方表格库脚本：iOS「文件」预览若解析巨型 xlsx 失败，仍可使用「确认」等交互 -->
+  <!-- 业务逻辑先于下方表格库脚本，确保主交互在库加载前即可绑定 -->
   <!-- xlsx-js-style 基于 SheetJS CE；商用交付前请自行核对许可证是否适用 -->
   <script>
     (function () {
-      try {
-        document.documentElement.classList.add("app-booted");
-      } catch (eBoot) {}
 
       /* XLSX 在下方脚本中定义；此处不检测，避免先于库加载时误报 */
 
