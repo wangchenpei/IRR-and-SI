@@ -482,6 +482,44 @@
       border: 1px solid #e0a82a;
       border-radius: 8px;
     }
+    .template-downloads {
+      margin: 12px 0 0;
+      padding: 8px 10px;
+      font-size: 0.74rem;
+      line-height: 1.45;
+      color: #7d8b9a;
+      background: #f4f6f9;
+      border: 1px solid #e4e9f0;
+      border-radius: 6px;
+    }
+    .template-downloads-title {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #6d7a88;
+      font-size: 0.74rem;
+    }
+    .template-downloads-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 10px;
+    }
+    .template-downloads .template-link {
+      color: #6f7f90;
+      font-weight: 500;
+      text-decoration: none;
+      border-bottom: 1px dashed #b8c4d4;
+      word-break: break-all;
+    }
+    .template-downloads .template-link:hover {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .template-downloads-sep {
+      color: #cfd8e4;
+      user-select: none;
+    }
     .params-summary {
       margin-top: 8px;
       font-size: 0.78rem;
@@ -822,6 +860,22 @@
         <div class="btn-row">
           <button type="button" id="btn-run" class="btn btn-primary" disabled>开始计算</button>
           <button type="button" id="btn-clear-file" class="btn btn-ghost">清除文件</button>
+        </div>
+        <div class="template-downloads" role="region" aria-label="演示表模板下载">
+          <span class="template-downloads-title">演示表模板</span>
+          <div class="template-downloads-row">
+            <a
+              class="template-link"
+              href="templates/不提取模板.xlsx"
+              download="不提取模板.xlsx"
+              >不提取模板.xlsx</a>
+            <span class="template-downloads-sep" aria-hidden="true">|</span>
+            <a
+              class="template-link"
+              href="templates/提取模板.xlsx"
+              download="提取模板.xlsx"
+              >提取模板.xlsx</a>
+          </div>
         </div>
       </div>
     </section>
