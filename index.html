@@ -808,14 +808,16 @@
         <h2>演示模式</h2>
         <fieldset class="mode-group">
           <legend>请选择一种情形</legend>
-          <label class="mode-option mode-option-label-only">
-            <input type="radio" name="premium_mode" value="no_withdraw" checked />
-            <span>不提取</span>
-          </label>
-          <label class="mode-option mode-option-label-only">
-            <input type="radio" name="premium_mode" value="withdraw" />
-            <span>提取</span>
-          </label>
+          <div class="mode-options-row" role="presentation">
+            <label class="mode-option mode-option-label-only">
+              <input type="radio" name="premium_mode" value="no_withdraw" checked />
+              <span>不提取</span>
+            </label>
+            <label class="mode-option mode-option-label-only">
+              <input type="radio" name="premium_mode" value="withdraw" />
+              <span>提取</span>
+            </label>
+          </div>
         </fieldset>
 
         <h2>保单演示文件</h2>
