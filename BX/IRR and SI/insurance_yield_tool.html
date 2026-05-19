@@ -25,6 +25,16 @@
       /* 页边与主区间距：约 1cm 略多 */
       --page-margin: 10.5mm;
     }
+
+    /* 页脚名句隶书 Web 字体：曺全碑隸 CoQuBeLi（开源项目，见同目录 fonts/README.txt） */
+    @font-face {
+      font-family: "CoQuBeLi";
+      src: url("fonts/CoQuBeLi.0.009.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -589,6 +599,49 @@
       cursor: not-allowed;
     }
 
+    /* 页脚两行说明 + 与主区风格一致的分割线 */
+    footer.page-foot-note {
+      box-sizing: border-box;
+      max-width: 1400px;
+      margin: 28px auto 10px;
+      padding: 20px var(--page-margin) 22px;
+      text-align: center;
+      font-family: "PingFang SC", "Microsoft YaHei", var(--font);
+    }
+    footer.page-foot-note .page-foot-divider {
+      width: 100%;
+      height: 1px;
+      margin: 0 auto 18px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        rgba(200, 212, 228, 0),
+        rgba(200, 212, 228, 0.65) 14%,
+        rgba(30, 90, 138, 0.2) 50%,
+        rgba(200, 212, 228, 0.65) 86%,
+        rgba(200, 212, 228, 0)
+      );
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+    footer.page-foot-note .page-foot-note__browser {
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #8c8c8c;
+    }
+    footer.page-foot-note .page-foot-note__quote {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #9a9a9a;
+      letter-spacing: 3px;
+      font-style: normal;
+      font-weight: 400;
+      /* Web 字体优先，保证各端同一套隶书字形；无网络/本地打开时仍用系统隶书作退路 */
+      font-family: "CoQuBeLi", "LiSu", "STLiti", "STLibian", "KaiTi", "STKaiti", "FangSong", "Songti SC", "SimSun", serif;
+    }
+
     footer.next-info {
       max-width: 1400px;
       margin: 1mm auto 4mm;
@@ -787,6 +840,14 @@
       </div>
     </section>
   </div>
+
+  <footer class="page-foot-note" aria-label="页脚说明">
+    <div class="page-foot-divider" aria-hidden="true"></div>
+    <p class="page-foot-note__browser">
+      推荐使用 Safari、Chrome 或 Edge 浏览器以获得最佳交互体验
+    </p>
+    <p class="page-foot-note__quote">「日中则昃，月盈则食；潜龙蓄德，静待时成。」</p>
+  </footer>
 
   <div
     id="discount-modal-overlay"
