@@ -1030,6 +1030,77 @@
         });
       }
 
+      /**
+       * 输入过程中：仅数字与至多一个小数点；整数部分加千分位，小数部分至多两位。
+       */
+      function formatNominalInputThousandsWhileTyping(display) {
+        var original = String(display || "");
+        var s = stripNominalGrouping(original);
+        if (!s) return "";
+        s = s.replace(/[^\d.]/g, "");
+        var firstDot = s.indexOf(".");
+        if (firstDot !== -1) {
+          s =
+            s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
+        }
+        var parts = s.split(".");
+        var intRaw = parts[0] || "";
+        var fracPart = parts.length > 1 ? parts[1] : null;
+
+        if (fracPart !== null && fracPart.length > 2) {
+          fracPart = fracPart.slice(0, 2);
+        }
+
+        var intDisplay = "";
+        if (intRaw !== "") {
+          if (!/^\d+$/.test(intRaw)) return original;
+          var intNum = parseInt(intRaw, 10);
+          if (!isFinite(intNum)) return original;
+          intDisplay = intNum.toLocaleString("en-US", {
+            useGrouping: true,
+            maximumFractionDigits: 0,
+          });
+        } else {
+          if (fracPart !== null && fracPart !== "") {
+            intDisplay = "0";
+          } else if (s === ".") {
+            return "0.";
+          } else {
+            intDisplay = "";
+          }
+        }
+
+        if (fracPart !== null) {
+          return intDisplay + "." + fracPart;
+        }
+        if (s.endsWith(".")) {
+          return intDisplay + ".";
+        }
+        return intDisplay;
+      }
+
+      /** 光标前「去逗号、去空白」前缀长度，用于输入后恢复光标 */
+      function nominalPrefixStrippedLen(visible, caret) {
+        var v = String(visible || "");
+        var c =
+          typeof caret === "number" && isFinite(caret)
+            ? Math.max(0, Math.min(caret, v.length))
+            : v.length;
+        return stripNominalGrouping(v.slice(0, c)).length;
+      }
+
+      /** 在新显示串中，使去逗号前缀长度达到 targetLen 的光标位置 */
+      function nominalCaretFromPrefixLen(newVisible, targetLen) {
+        var v = String(newVisible || "");
+        var maxLen = stripNominalGrouping(v).length;
+        var t = Math.max(0, Math.min(targetLen, maxLen));
+        if (t <= 0) return 0;
+        for (var i = 0; i <= v.length; i++) {
+          if (nominalPrefixStrippedLen(v, i) >= t) return i;
+        }
+        return v.length;
+      }
+
       var fileInput = document.getElementById("file-input");
       var dropzone = document.getElementById("dropzone");
       var fileMeta = document.getElementById("file-meta");
@@ -1730,15 +1801,22 @@
         updateRunButtonState();
       }
       nominalInput.addEventListener("input", function () {
+        var el = nominalInput;
+        var oldV = el.value;
+        var oldC =
+          typeof el.selectionStart === "number" ? el.selectionStart : oldV.length;
+        var prefLen = nominalPrefixStrippedLen(oldV, oldC);
+        var newV = formatNominalInputThousandsWhileTyping(oldV);
+        if (newV !== oldV) {
+          el.value = newV;
+          var nc = nominalCaretFromPrefixLen(newV, prefLen);
+          try {
+            el.setSelectionRange(nc, nc);
+          } catch (e) {}
+        }
         invalidateBaseParams();
         setBaseParamsStatus("", false);
         updateRunButtonState();
-      });
-      nominalInput.addEventListener("focus", function () {
-        var x = parseNominalFieldToNumber();
-        if (isFinite(x)) {
-          nominalInput.value = String(x);
-        }
       });
       nominalInput.addEventListener("blur", function () {
         formatNominalInputThousandsBlur();
