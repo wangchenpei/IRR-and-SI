@@ -26,6 +26,8 @@
       --page-margin: 10.5mm;
     }
 
+    /* 获利倍数列：固定香槟金（与导出 Excel 末列字体色一致） */
+
     /* 页脚名句隶书 Web 字体：曺全碑隸 CoQuBeLi（开源项目，见同目录 fonts/README.txt） */
     @font-face {
       font-family: "CoQuBeLi";
@@ -337,7 +339,6 @@
       font-size: 0.9rem;
       color: var(--accent);
     }
-
     .table-wrap {
       overflow: auto;
       /* 表头约一行 + 约 27 行数据为可视上限(略收紧行高估算，避免露出到约 29 行)；不足 27 行随内容变矮 */
@@ -363,6 +364,9 @@
       border-bottom: 2px solid #c9a227;
       white-space: nowrap;
     }
+    table.result thead th:last-child {
+      text-align: center;
+    }
     table.result td {
       padding: 6px 10px;
       border-bottom: 1px solid #e0e8f0;
@@ -374,6 +378,15 @@
     }
     table.result tbody tr:hover {
       background: #e4f0fb;
+    }
+    table.result td.premium-mult-cell {
+      font-weight: 650;
+      text-align: center;
+      color: #c4932a;
+      text-shadow:
+        0 1px 0 rgba(255, 250, 225, 0.92),
+        0 1px 2px rgba(110, 72, 8, 0.22),
+        0 0 12px rgba(212, 168, 55, 0.18);
     }
 
     .placeholder-hint {
@@ -637,19 +650,52 @@
       cursor: not-allowed;
     }
 
+    /* 页脚：与主区同宽；内容仅落在右侧「计算结果」栏宽内并居中（不贴在表格下） */
+    .shell-foot-align {
+      box-sizing: border-box;
+      max-width: 1400px;
+      margin: 6px auto 8px;
+      padding: 0 var(--page-margin);
+      display: flex;
+      align-items: stretch;
+      flex-wrap: nowrap;
+    }
+    .shell-foot-align__spacer {
+      flex: 0 0 336px;
+      max-width: 100%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .shell-foot-align .page-foot-note {
+      flex: 1 1 480px;
+      min-width: 0;
+      margin: 0;
+      max-width: none;
+      padding: 8px 10px 12px;
+    }
+    @media (max-width: 860px) {
+      .shell-foot-align {
+        flex-wrap: wrap;
+      }
+      .shell-foot-align__spacer {
+        display: none;
+      }
+      .shell-foot-align .page-foot-note {
+        flex: 1 1 100%;
+        padding: 8px var(--page-margin) 12px;
+      }
+    }
+
     /* 页脚两行说明 + 与主区风格一致的分割线 */
     footer.page-foot-note {
       box-sizing: border-box;
-      max-width: 1400px;
-      margin: 28px auto 10px;
-      padding: 20px var(--page-margin) 22px;
       text-align: center;
       font-family: "PingFang SC", "Microsoft YaHei", var(--font);
     }
     footer.page-foot-note .page-foot-divider {
       width: 100%;
       height: 1px;
-      margin: 0 auto 18px;
+      margin: 0 auto 10px;
       border: 0;
       border-radius: 999px;
       background: linear-gradient(
@@ -663,7 +709,7 @@
       box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
     }
     footer.page-foot-note .page-foot-note__browser {
-      margin: 0 0 10px;
+      margin: 0 0 6px;
       font-size: 12px;
       line-height: 1.5;
       color: #8c8c8c;
@@ -741,9 +787,8 @@
           <label for="nominal-amount">名义总保费</label>
           <input
             id="nominal-amount"
-            type="number"
-            min="0"
-            step="0.01"
+            type="text"
+            inputmode="decimal"
             placeholder="请输入名义总保费"
             autocomplete="off"
           />
@@ -824,7 +869,7 @@
 
         <h2>保单演示文件</h2>
         <p class="file-schema-note">
-          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。仅支持 .xlsx / .xls。
+          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。结果表「获利倍数」：现价÷截至该年度累计实缴；<strong>仅显示大于 1</strong>的倍数（≤1 或负数不显示）；在已大于 1 的前提下，仅当<strong>整数部分</strong>较上一有效行变大时显示两位小数，否则为 "-"。年缴累计实缴为各年折扣后保费之和；<strong>预缴</strong>下分母为一次性折算保费全额（与复利/单利相同，视作首年全额投入）。仅支持 .xlsx / .xls。
         </p>
         <input id="file-input" type="file" accept=".xlsx,.xls" />
         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
@@ -869,13 +914,16 @@
     </section>
   </div>
 
-  <footer class="page-foot-note" aria-label="页脚说明">
-    <div class="page-foot-divider" aria-hidden="true"></div>
-    <p class="page-foot-note__browser">
-      推荐使用 Safari、Chrome 或 Edge 浏览器以获得最佳交互体验
-    </p>
-    <p class="page-foot-note__quote">「日中则昃，月盈则食；潜龙蓄德，静待时成。」</p>
-  </footer>
+  <div class="shell-foot-align">
+    <div class="shell-foot-align__spacer" aria-hidden="true"></div>
+    <footer class="page-foot-note" aria-label="页脚说明">
+      <div class="page-foot-divider" aria-hidden="true"></div>
+      <p class="page-foot-note__browser">
+        推荐使用 Safari、Chrome 或 Edge 浏览器以获得最佳交互体验
+      </p>
+      <p class="page-foot-note__quote">「日中则昃，月盈则食；潜龙蓄德，静待时成。」</p>
+    </footer>
+  </div>
 
   <div
     id="discount-modal-overlay"
@@ -952,6 +1000,36 @@
         }
       }
 
+      /** 去掉千分位逗号与空白，供解析名义总保费 */
+      function stripNominalGrouping(s) {
+        return String(s || "")
+          .replace(/,/g, "")
+          .replace(/\s/g, "")
+          .trim();
+      }
+
+      /** 名义总保费输入框当前值 → 数值 */
+      function parseNominalFieldToNumber() {
+        var el = document.getElementById("nominal-amount");
+        if (!el) return NaN;
+        var x = parseFloat(stripNominalGrouping(el.value));
+        return isFinite(x) ? x : NaN;
+      }
+
+      /** 失焦时格式化为英文千分位 + 最多两位小数，如 1,000,000.12 */
+      function formatNominalInputThousandsBlur() {
+        var el = document.getElementById("nominal-amount");
+        if (!el) return;
+        if (!stripNominalGrouping(el.value)) return;
+        var x = parseNominalFieldToNumber();
+        if (!isFinite(x)) return;
+        el.value = x.toLocaleString("en-US", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+          useGrouping: true,
+        });
+      }
+
       var fileInput = document.getElementById("file-input");
       var dropzone = document.getElementById("dropzone");
       var fileMeta = document.getElementById("file-meta");
@@ -966,8 +1044,12 @@
       var workbookDisplayName = "";
       /** @type {{ sheetNames: string[], wb?: any } | null} */
       var lastWorkbookStub = null;
-      /** @type {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null }[]} */
+      /** @type {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null, premiumMultiple?: number|null }[]} */
+      /** premiumMultiple：现价÷累计实缴(两位小数)；获利倍数列择行显示 */
       var lastResultRows = [];
+
+      /** 导出 Excel「获利倍数」列字体色（香槟金 ARGB） */
+      var GAIN_MULT_XLSX_RGB = "FFC4932A";
 
       /**
        * 四舍五入到 fractionDigits 位小数(half-up：绝对值先乘 10^d，再 Math.round)。
@@ -1069,6 +1151,78 @@
           arr.push(base * (1 - d / 100));
         }
         return arr;
+      }
+
+      /**
+       * 截至保单年度 N 末已累计实缴保费（用于获利倍数分母）。
+       * 年缴：第 1..min(N,缴费年限) 年折扣后保费之和（分批投入）。
+       * 预缴：与复利/单利一致，**始终**为一次性折算总保费 lump（视作首年全额投入，不按年分批）。
+       */
+      function cumulativePaidPremiumThroughYear(
+        N,
+        payYears,
+        prepayMode,
+        premArr,
+        lumpPremium,
+        nominalForPrepay,
+        prepayBonusForPrepay
+      ) {
+        if (!Number.isInteger(N) || N < 1) return null;
+        if (prepayMode) {
+          if (!(lumpPremium > 0) || !isFinite(lumpPremium)) return null;
+          return lumpPremium;
+        }
+        if (!Number.isInteger(payYears) || payYears < 1 || !premArr || !premArr.length) return null;
+        var m = Math.min(N, payYears);
+        var sum = 0;
+        for (var j = 0; j < m; j++) {
+          var pr = premArr[j];
+          if (!isFinite(pr) || pr < 0) return null;
+          sum += pr;
+        }
+        return sum;
+      }
+
+      /**
+       * 现价÷累计实缴保费；无效时 null。用于「获利倍数」列。
+       */
+      function computePremiumMultipleRatio(totalValue, cumulativePremium) {
+        if (totalValue === null || !isFinite(totalValue) || !(totalValue > 0)) return null;
+        if (
+          cumulativePremium === null ||
+          !isFinite(cumulativePremium) ||
+          !(cumulativePremium > 0)
+        ) {
+          return null;
+        }
+        return totalValue / cumulativePremium;
+      }
+
+      /**
+       * 获利倍数展示：倍数须为四舍五入两位后 &gt; 1（≤1 或负数不显示）；再仅当整数部分较上一「有效」行严格变大时显示，否则 "-"。
+       * 上一行倍数 ≤1 或无效时，不以之作档位比较（视同首档）。
+       */
+      function formatGainMultipleCell(pm, prevPm) {
+        if (pm === null || !isFinite(pm)) return "-";
+        var rounded = roundHalfUp(pm, 2);
+        if (!isFinite(rounded) || rounded < 0 || rounded <= 1) return "-";
+        var curF = Math.floor(rounded + 1e-9);
+        var prevRounded =
+          prevPm !== null && isFinite(prevPm) ? roundHalfUp(prevPm, 2) : null;
+        if (
+          prevRounded !== null &&
+          (!isFinite(prevRounded) || prevRounded < 0 || prevRounded <= 1)
+        ) {
+          prevRounded = null;
+        }
+        var prevF =
+          prevRounded !== null ? Math.floor(prevRounded + 1e-9) : null;
+        var show = prevF === null ? true : curF > prevF;
+        if (!show) return "-";
+        return safeNumLocale(rounded, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
       }
 
       function futureValueSum(x, N, premiums, payYears) {
@@ -1305,6 +1459,18 @@
               compoundStrP = "—";
               simpleStrP = "—";
             }
+            var cumPrepay = cumulativePaidPremiumThroughYear(
+              Np,
+              bizParams.payYears,
+              true,
+              [],
+              lump,
+              bizParams.nominalAmount,
+              bizParams.prepayBonus
+            );
+            var ratioP = computePremiumMultipleRatio(Sp, cumPrepay);
+            var pmP =
+              ratioP !== null && isFinite(ratioP) ? roundHalfUp(ratioP, 2) : null;
             results.push({
               yearLabel: recP.yearLabel,
               yearNum: Np,
@@ -1313,6 +1479,7 @@
               simplePct: simpleStrP,
               valueK: recP.valueK,
               valueG: recP.valueG,
+              premiumMultiple: pmP,
             });
           }
           return { rows: results, err: null, prepayLumpPremium: lump };
@@ -1346,6 +1513,18 @@
             compoundStr = "—";
             simpleStr = "—";
           }
+          var cumAnnual = cumulativePaidPremiumThroughYear(
+            N,
+            bizParams.payYears,
+            false,
+            prem,
+            0,
+            null,
+            null
+          );
+          var ratioM = computePremiumMultipleRatio(S, cumAnnual);
+          var pm =
+            ratioM !== null && isFinite(ratioM) ? roundHalfUp(ratioM, 2) : null;
           results.push({
             yearLabel: rec.yearLabel,
             yearNum: N,
@@ -1354,6 +1533,7 @@
             simplePct: simpleStr,
             valueK: rec.valueK,
             valueG: rec.valueG,
+            premiumMultiple: pm,
           });
         }
         return { rows: results, err: null };
@@ -1463,8 +1643,10 @@
         var nomDisp =
           typeof bizParams.nominalAmount === "number" &&
           isFinite(bizParams.nominalAmount)
-            ? safeNumLocale(bizParams.nominalAmount, {
+            ? bizParams.nominalAmount.toLocaleString("en-US", {
+                minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
+                useGrouping: true,
               })
             : String(bizParams.nominalAmount);
         var discountSentence;
@@ -1495,6 +1677,13 @@
             discountSentence,
           true
         );
+        if (nominalInput && typeof nominal === "number" && isFinite(nominal)) {
+          nominalInput.value = nominal.toLocaleString("en-US", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+            useGrouping: true,
+          });
+        }
         updateRunButtonState();
       }
 
@@ -1544,6 +1733,15 @@
         invalidateBaseParams();
         setBaseParamsStatus("", false);
         updateRunButtonState();
+      });
+      nominalInput.addEventListener("focus", function () {
+        var x = parseNominalFieldToNumber();
+        if (isFinite(x)) {
+          nominalInput.value = String(x);
+        }
+      });
+      nominalInput.addEventListener("blur", function () {
+        formatNominalInputThousandsBlur();
       });
       payYearsInput.addEventListener("input", function () {
         invalidateBaseParams();
@@ -1720,7 +1918,7 @@
         } else {
           closeDiscountModal();
           commitConfirmedBaseParams(
-            parseFloat(String(nominalInput.value).trim().replace(",", ".")),
+            parseNominalFieldToNumber(),
             wizardN,
             wizardDraft.slice(),
             false
@@ -1729,7 +1927,7 @@
       });
 
       btnConfirmBase.addEventListener("click", function () {
-        var nom = parseFloat(String(nominalInput.value).trim().replace(",", "."));
+        var nom = parseNominalFieldToNumber();
         var years = parseInt(String(payYearsInput.value).trim(), 10);
         if (!isFinite(nom) || nom <= 0) {
           setBaseParamsStatus("请填写有效的名义总保费(须大于 0)。", false);
@@ -1927,14 +2125,22 @@
         var withdraw = getPremiumMode() === "withdraw";
         if (withdraw) {
           thead.innerHTML =
-            "<tr><th>保单年度</th><th>累计提取总额</th><th>提取后剩余价值</th><th>复利收益率</th><th>单利收益率</th></tr>";
+            '<tr><th>保单年度</th><th>累计提取总额</th><th>提取后剩余价值</th><th>复利收益率</th><th>单利收益率</th><th title="现价÷累计实缴；仅显示&gt;1 的倍数，整数档较上一有效行变大时显示两位小数，否则为 -">获利倍数</th></tr>';
         } else {
           thead.innerHTML =
-            "<tr><th>保单年度</th><th>预期保单现价</th><th>复利收益率</th><th>单利收益率</th></tr>";
+            '<tr><th>保单年度</th><th>预期保单现价</th><th>复利收益率</th><th>单利收益率</th><th title="现价÷累计实缴；仅显示&gt;1 的倍数，整数档较上一有效行变大时显示两位小数，否则为 -">获利倍数</th></tr>';
         }
         var tbody = document.createElement("tbody");
-        rows.forEach(function (r) {
+        for (var ri = 0; ri < rows.length; ri++) {
+          var r = rows[ri];
           var tr = document.createElement("tr");
+          var prevPm =
+            ri > 0 &&
+            rows[ri - 1].premiumMultiple !== null &&
+            isFinite(rows[ri - 1].premiumMultiple)
+              ? rows[ri - 1].premiumMultiple
+              : null;
+          var multTxt = escapeHtml(formatGainMultipleCell(r.premiumMultiple, prevPm));
           if (withdraw) {
             tr.innerHTML =
               "<td>" +
@@ -1947,6 +2153,8 @@
               escapeHtml(r.compoundPct) +
               "</td><td>" +
               escapeHtml(r.simplePct) +
+              '</td><td class="premium-mult-cell">' +
+              multTxt +
               "</td>";
           } else {
             tr.innerHTML =
@@ -1958,10 +2166,12 @@
               escapeHtml(r.compoundPct) +
               "</td><td>" +
               escapeHtml(r.simplePct) +
+              '</td><td class="premium-mult-cell">' +
+              multTxt +
               "</td>";
           }
           tbody.appendChild(tr);
-        });
+        }
         table.appendChild(thead);
         table.appendChild(tbody);
         tableContainer.appendChild(table);
@@ -1972,14 +2182,14 @@
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
       /**
-       * 构建导出工作表：自 C4 起；不提取为 C–F 四列，提取为 C–G 五列(累计提取总额与提取后剩余价值分开展示)。第 5 行整行合并；最后一行各格同画底边。
-       * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null }[]} rows
+       * 构建导出工作表：自 C4 起；不提取为 C–G 五列(末列为获利倍数)，提取为 C–H 六列。第 5 行整行合并；最后一行各格同画底边。
+       * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null, premiumMultiple?: number|null }[]} rows
        */
       function buildStyledYieldSheet(rows) {
         var enc = XLSX.utils.encode_cell;
         var c0 = 2;
         var isWithdrawExport = getPremiumMode() === "withdraw";
-        var colCount = isWithdrawExport ? 5 : 4;
+        var colCount = isWithdrawExport ? 6 : 5;
         var cEnd = c0 + colCount - 1;
         var blk = { style: "thin", color: { rgb: "FF1A1A1A" } };
         var grayH = { style: "thin", color: { rgb: "FFE0E8F0" } };
@@ -2018,8 +2228,9 @@
               "提取后剩余价值",
               "复利收益率",
               "单利收益率",
+              "获利倍数",
             ]
-          : ["保单年度", "预期保单现价", "复利收益率", "单利收益率"];
+          : ["保单年度", "预期保单现价", "复利收益率", "单利收益率", "获利倍数"];
         for (var h = 0; h < colCount; h++) {
           setCell(rHead, c0 + h, hdrs[h], "s");
         }
@@ -2060,6 +2271,23 @@
             );
             setCell(rr, c0 + 3, rec.compoundPct || "", "s");
             setCell(rr, c0 + 4, rec.simplePct || "", "s");
+            var prevGainW =
+              ir > 0 &&
+              rows[ir - 1].premiumMultiple != null &&
+              isFinite(rows[ir - 1].premiumMultiple)
+                ? rows[ir - 1].premiumMultiple
+                : null;
+            var gainStrW = formatGainMultipleCell(rec.premiumMultiple, prevGainW);
+            if (gainStrW === "-") {
+              setCell(rr, c0 + 5, "-", "s");
+            } else if (
+              rec.premiumMultiple !== null &&
+              isFinite(rec.premiumMultiple)
+            ) {
+              setCell(rr, c0 + 5, rec.premiumMultiple, "n");
+            } else {
+              setCell(rr, c0 + 5, "", "s");
+            }
           } else {
             var cv =
               rec.cashValue !== null && isFinite(rec.cashValue) ? rec.cashValue : "";
@@ -2068,6 +2296,23 @@
             setCell(rr, c0 + 1, cv === "" ? "" : cv, tCash);
             setCell(rr, c0 + 2, rec.compoundPct || "", "s");
             setCell(rr, c0 + 3, rec.simplePct || "", "s");
+            var prevGainN =
+              ir > 0 &&
+              rows[ir - 1].premiumMultiple != null &&
+              isFinite(rows[ir - 1].premiumMultiple)
+                ? rows[ir - 1].premiumMultiple
+                : null;
+            var gainStrN = formatGainMultipleCell(rec.premiumMultiple, prevGainN);
+            if (gainStrN === "-") {
+              setCell(rr, c0 + 4, "-", "s");
+            } else if (
+              rec.premiumMultiple !== null &&
+              isFinite(rec.premiumMultiple)
+            ) {
+              setCell(rr, c0 + 4, rec.premiumMultiple, "n");
+            } else {
+              setCell(rr, c0 + 4, "", "s");
+            }
           }
         }
 
@@ -2083,10 +2328,11 @@
             { wch: 13 },
             { wch: 13 },
             { wch: 12 },
-            { wch: 12 }
+            { wch: 12 },
+            { wch: 8 }
           );
         } else {
-          ws["!cols"].push({ wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 12 });
+          ws["!cols"].push({ wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 8 });
         }
         ws["!rows"] = [];
         for (var ri = 0; ri <= lastDataR; ri++) {
@@ -2147,6 +2393,7 @@
               ? { patternType: "solid", fgColor: { rgb: "FFFFFFFF" } }
               : { patternType: "solid", fgColor: { rgb: "FFF2F6FB" } };
           var isLast = dr === rows.length - 1;
+          var gainRgb = GAIN_MULT_XLSX_RGB;
           for (var bc = 0; bc < colCount; bc++) {
             var cc = c0 + bc;
             var addr = enc({ r: rr, c: cc });
@@ -2167,18 +2414,31 @@
             } else if (isWithdrawExport) {
               if (bc === 1 || bc === 2) {
                 hAlign = "center";
+              } else if (bc === colCount - 1) {
+                hAlign = "center";
               } else {
                 hAlign = "right";
               }
             } else {
               if (bc === 1) {
                 hAlign = "center";
+              } else if (bc === colCount - 1) {
+                hAlign = "center";
               } else {
                 hAlign = "right";
               }
             }
+            var cellFont =
+              bc === colCount - 1
+                ? {
+                    sz: 10,
+                    name: "Microsoft YaHei",
+                    bold: true,
+                    color: { rgb: gainRgb },
+                  }
+                : { sz: 10, name: "Microsoft YaHei" };
             var cellStyle = {
-              font: { sz: 10, name: "Microsoft YaHei" },
+              font: cellFont,
               fill: zebraFill,
               alignment: {
                 horizontal: hAlign,
@@ -2190,9 +2450,13 @@
             if (isWithdrawExport) {
               if ((bc === 1 || bc === 2) && isNum) {
                 cellStyle.numFmt = "#,##0.00";
+              } else if (bc === colCount - 1 && isNum) {
+                cellStyle.numFmt = "0.00";
               }
             } else if (bc === 1 && isNum) {
               cellStyle.numFmt = "#,##0.00";
+            } else if (bc === colCount - 1 && isNum) {
+              cellStyle.numFmt = "0.00";
             }
             ws[addr].s = cellStyle;
           }
