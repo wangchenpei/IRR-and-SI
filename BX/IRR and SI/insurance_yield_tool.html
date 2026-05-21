@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- 访客统计配置尽早加载（见 analytics/config.js）；GA4 与官方顺序一致 -->
+  <script defer src="analytics/config.js"></script>
   <title>保险演示收益率 · Alpha Wang</title>
   <!-- 表格库(xlsx-js-style)已内嵌于页面底部 script，避免外网 CDN 与 iOS 本地文件无法加载 sibling .js -->
   <style>
@@ -751,8 +753,6 @@
       border-radius: 8px;
     }
   </style>
-  <!-- 访客统计：无界面；配置 analytics/config.js，说明见 analytics/README.md -->
-  <script defer src="analytics/config.js"></script>
 </head>
 <body>
   <div id="xlsx-load-error" role="alert"></div>
@@ -2177,8 +2177,16 @@
         });
       }
 
-      function formatMoneyCell(n) {
+      /** 金额单元格展示；integerOnly 为 true 时四舍五入到整数（预期现价 / 提取相关列） */
+      function formatMoneyCell(n, integerOnly) {
         if (n === null || n === undefined || !isFinite(n)) return "—";
+        if (integerOnly) {
+          var ri = roundHalfUp(n, 0);
+          return safeNumLocale(ri, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          });
+        }
         var r = roundHalfUp(n, 2);
         return safeNumLocale(r, {
           minimumFractionDigits: 2,
@@ -2224,9 +2232,9 @@
               "<td>" +
               escapeHtml(r.yearLabel) +
               "</td><td>" +
-              escapeHtml(formatMoneyCell(r.valueG)) +
+              escapeHtml(formatMoneyCell(r.valueG, true)) +
               "</td><td>" +
-              escapeHtml(formatMoneyCell(r.valueK)) +
+              escapeHtml(formatMoneyCell(r.valueK, true)) +
               "</td><td>" +
               escapeHtml(r.compoundPct) +
               "</td><td>" +
@@ -2239,7 +2247,7 @@
               "<td>" +
               escapeHtml(r.yearLabel) +
               "</td><td>" +
-              escapeHtml(formatMoneyCell(r.cashValue)) +
+              escapeHtml(formatMoneyCell(r.cashValue, true)) +
               "</td><td>" +
               escapeHtml(r.compoundPct) +
               "</td><td>" +
@@ -2527,12 +2535,12 @@
             };
             if (isWithdrawExport) {
               if ((bc === 1 || bc === 2) && isNum) {
-                cellStyle.numFmt = "#,##0.00";
+                cellStyle.numFmt = "#,##0";
               } else if (bc === colCount - 1 && isNum) {
                 cellStyle.numFmt = "0.00";
               }
             } else if (bc === 1 && isNum) {
-              cellStyle.numFmt = "#,##0.00";
+              cellStyle.numFmt = "#,##0";
             } else if (bc === colCount - 1 && isNum) {
               cellStyle.numFmt = "0.00";
             }

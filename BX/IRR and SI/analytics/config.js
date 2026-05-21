@@ -26,19 +26,22 @@ window.IRR_SI_SITE_ANALYTICS = {
   }
 
   if (C.ga4MeasurementId && String(C.ga4MeasurementId).indexOf("G-") === 0) {
+    var gaId = String(C.ga4MeasurementId);
+    // 与 GA4 官方指引一致：先插入 gtag.js，再执行 dataLayer / gtag('config')
+    var ext = document.createElement("script");
+    ext.async = true;
+    ext.src =
+      "https://www.googletagmanager.com/gtag/js?id=" +
+      encodeURIComponent(gaId);
+    document.head.appendChild(ext);
+
     window.dataLayer = window.dataLayer || [];
     function gtag() {
       window.dataLayer.push(arguments);
     }
     window.gtag = gtag;
     gtag("js", new Date());
-    gtag("config", C.ga4MeasurementId);
-    var g = document.createElement("script");
-    g.async = true;
-    g.src =
-      "https://www.googletagmanager.com/gtag/js?id=" +
-      encodeURIComponent(C.ga4MeasurementId);
-    document.head.appendChild(g);
+    gtag("config", gaId);
     return;
   }
 

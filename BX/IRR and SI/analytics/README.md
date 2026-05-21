@@ -62,3 +62,11 @@ window.IRR_SI_SITE_ANALYTICS = {
 ## 部署后
 
 推送到 GitHub Pages 使用的分支后，在对应产品后台查看实时访问（可能有数分钟延迟）。
+
+### GA4 看不到数据时可排查
+
+- **衡量 ID** 须与 GA4 数据流里一致（本仓库默认 `G-43LVQ35QT7`，改 ID 时只改 `analytics/config.js` 即可）。
+- **实时报告**：左侧「报告 → 实时」；新属性有时需 **24～48 小时** 后标准报告才有数据。
+- **浏览器**：关闭广告拦截 / 隐私扩展后试访问；或用 Chrome 安装 **Google Tag Assistant** / **GA Debugger** 看是否发出 `collect` 请求。
+- **网址**：数据流里填的网址应与实际访问一致（如 `https://wangchenpei.github.io/IRR-and-SI/`）。
+- **脚本路径**：页面依赖 `https://…/IRR-and-SI/analytics/config.js` 能返回 **200**（勿删仓库根目录下 `analytics/` 文件夹）。
