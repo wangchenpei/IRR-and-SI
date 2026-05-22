@@ -869,7 +869,7 @@
 
         <h2>保单演示文件</h2>
         <p class="file-schema-note">
-          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。结果表「获利倍数」：现价÷截至该年度累计实缴；<strong>仅显示大于 1</strong>的倍数（≤1 或负数不显示）；在已大于 1 的前提下，仅当<strong>整数部分</strong>较上一有效行变大时显示两位小数，否则为 "-"。年缴累计实缴为各年折扣后保费之和；<strong>预缴</strong>下分母为一次性折算保费全额（与复利/单利相同，视作首年全额投入）。仅支持 .xlsx / .xls。
+          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。仅支持 .xlsx / .xls。
         </p>
         <input id="file-input" type="file" accept=".xlsx,.xls" />
         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
