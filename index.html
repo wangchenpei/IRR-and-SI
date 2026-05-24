@@ -821,7 +821,7 @@
               placeholder="如 68 表示 68%"
               autocomplete="off"
             />
-            <p class="field-hint">预缴优惠为年化百分比折扣。</p>
+            <p class="field-hint">预缴优惠为年化百分比折扣；未填写时按 0%。</p>
             <p id="prepay-lump-hint" class="field-hint prepay-lump-hint" aria-live="polite"></p>
           </div>
         </div>
@@ -1493,7 +1493,10 @@
 
         if (prepayMode) {
           if (bizParams.prepayBonus === null || !isFinite(bizParams.prepayBonus)) {
-            return { rows: [], err: "预缴模式下请填写「预缴优惠」百分比(如 68 表示 68%)。" };
+            return {
+              rows: [],
+              err: "预缴模式下「预缴优惠」须为有效数字；未填写时按 0%。",
+            };
           }
           var lump = buildPrepayLumpPremium(
             bizParams.nominalAmount,
@@ -1691,7 +1694,7 @@
         if (bizParams.prepay) {
           var v = prepayBonusInput.value.trim();
           if (v === "") {
-            bizParams.prepayBonus = null;
+            bizParams.prepayBonus = 0;
           } else {
             var x = parseFloat(v.replace(",", "."));
             bizParams.prepayBonus = isFinite(x) ? x : null;
