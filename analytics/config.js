@@ -9,6 +9,12 @@ window.IRR_SI_SITE_ANALYTICS = {
   /** Google Analytics 4：衡量 ID，形如 G-XXXXXXXX */
   ga4MeasurementId: "G-43LVQ35QT7",
 
+  /**
+   * 自有轻量访问计数接口：填入你部署的 Cloudflare Worker /hit 地址。
+   * 留空时不发送；可与 GA4 同时使用，用于补充被 GA4 拦截时的打开次数统计。
+   */
+  selfHostedCounterEndpoint: "",
+
   /** Plausible：站点 hostname，如 wangchenpei.github.io */
   plausibleDomain: "",
   /** 自建 Plausible 时改为你的 script.js 完整 URL；留空则用 plausible.io */
@@ -23,6 +29,31 @@ window.IRR_SI_SITE_ANALYTICS = {
   var C = window.IRR_SI_SITE_ANALYTICS;
   if (!C || !C.enabled) {
     return;
+  }
+
+  if (C.selfHostedCounterEndpoint) {
+    try {
+      var payload = JSON.stringify({
+        site: "IRR-and-SI",
+        path: location.pathname,
+        search: location.search,
+        title: document.title,
+        referrer: document.referrer ? document.referrer.slice(0, 300) : "",
+        ts: new Date().toISOString(),
+      });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(C.selfHostedCounterEndpoint, payload);
+      } else {
+        fetch(C.selfHostedCounterEndpoint, {
+          method: "POST",
+          body: payload,
+          mode: "cors",
+          credentials: "omit",
+          keepalive: true,
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        }).catch(function () {});
+      }
+    } catch (e) {}
   }
 
   if (C.ga4MeasurementId && String(C.ga4MeasurementId).indexOf("G-") === 0) {
