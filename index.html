@@ -1118,6 +1118,8 @@
       /** @type {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null, premiumMultiple?: number|null }[]} */
       /** premiumMultiple：现价÷累计实缴(两位小数)；获利倍数列择行显示 */
       var lastResultRows = [];
+      /** @type {{ nominalAmount: number|null, payYears: number|null, prepay: boolean } | null} */
+      var lastExportParams = null;
 
       /** 导出 Excel「获利倍数」列字体色（香槟金 ARGB） */
       var GAIN_MULT_XLSX_RGB = "FFC4932A";
@@ -2058,6 +2060,7 @@
           pm[pi].addEventListener("change", function () {
             if (lastResultRows.length) {
               lastResultRows = [];
+              lastExportParams = null;
               btnExport.disabled = true;
               renderPlaceholder();
               setFileMeta("演示模式已变更，请重新点击「开始计算」。", false);
@@ -2138,6 +2141,7 @@
         workbookDisplayName = "";
         lastWorkbookStub = null;
         lastResultRows = [];
+        lastExportParams = null;
         updateRunButtonState();
         btnExport.disabled = true;
         setFileMeta("", false);
@@ -2270,8 +2274,37 @@
       var EXPORT_TOOL_TITLE = "保险演示收益率";
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
+      function formatExportHeaderAmount(amount) {
+        if (typeof amount !== "number" || !isFinite(amount)) return "未确认";
+        return amount.toLocaleString("en-US", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+          useGrouping: true,
+        });
+      }
+
+      function buildExportHeaderParamText() {
+        var params = lastExportParams || {
+          nominalAmount: bizParams.nominalAmount,
+          payYears: bizParams.payYears,
+          prepay: getPrepayMode(),
+        };
+        var payYearsText =
+          Number.isInteger(params.payYears) && params.payYears > 0
+            ? params.payYears + " 期"
+            : "未确认";
+        return (
+          "名义总保费：" +
+          formatExportHeaderAmount(params.nominalAmount) +
+          "　　　　缴费期数：" +
+          payYearsText +
+          "　　　　缴费方式：" +
+          (params.prepay ? "预缴" : "非预缴")
+        );
+      }
+
       /**
-       * 构建导出工作表：自 C4 起；不提取为 C–G 五列(末列为获利倍数)，提取为 C–H 六列。第 5 行整行合并；最后一行各格同画底边。
+       * 构建导出工作表：自 C4 起；不提取为 C–G 五列(末列为获利倍数)，提取为 C–H 六列。顶部标题区整行合并；最后一行各格同画底边。
        * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null, premiumMultiple?: number|null }[]} rows
        */
       function buildStyledYieldSheet(rows) {
@@ -2286,8 +2319,9 @@
         var timeStr = safeDateTimeLocale(new Date());
         var rTitle = 3;
         var rSub = 4;
-        var rHead = 5;
-        var rData0 = 6;
+        var rParam = 5;
+        var rHead = 6;
+        var rData0 = 7;
         var lastDataR = rData0 + rows.length - 1;
 
         var ws = {};
@@ -2309,6 +2343,9 @@
           "作者：" + EXPORT_AUTHOR_NAME + "　　　　导出时间：" + timeStr;
         setCell(rSub, c0, subText, "s");
         merges.push({ s: { r: rSub, c: c0 }, e: { r: rSub, c: cEnd } });
+
+        setCell(rParam, c0, buildExportHeaderParamText(), "s");
+        merges.push({ s: { r: rParam, c: c0 }, e: { r: rParam, c: cEnd } });
 
         var hdrs = isWithdrawExport
           ? [
@@ -2427,6 +2464,7 @@
         for (var ri = 0; ri <= lastDataR; ri++) {
           if (ri === rTitle) ws["!rows"][ri] = { hpt: 20 };
           else if (ri === rSub) ws["!rows"][ri] = { hpt: 16 };
+          else if (ri === rParam) ws["!rows"][ri] = { hpt: 16 };
           else if (ri === rHead) ws["!rows"][ri] = { hpt: 20 };
           else ws["!rows"][ri] = { hpt: 18 };
         }
@@ -2447,6 +2485,16 @@
             right: blk,
           },
         };
+        for (var tc = c0 + 1; tc <= cEnd; tc++) {
+          var titleMergeAddr = enc({ r: rTitle, c: tc });
+          if (!ws[titleMergeAddr]) {
+            ws[titleMergeAddr] = { v: "", t: "s" };
+          }
+          ws[titleMergeAddr].s = {
+            fill: { patternType: "solid", fgColor: { rgb: "FF1F3D56" } },
+            border: tc === cEnd ? { top: blk, right: blk } : { top: blk },
+          };
+        }
 
         var subAddr = enc({ r: rSub, c: c0 });
         ws[subAddr].s = {
@@ -2454,6 +2502,30 @@
           fill: { patternType: "solid", fgColor: { rgb: "FFE8F1F9" } },
           alignment: { horizontal: "left", vertical: "center", wrapText: true },
           border: { left: blk, right: blk },
+        };
+        var subRightAddr = enc({ r: rSub, c: cEnd });
+        if (!ws[subRightAddr]) {
+          ws[subRightAddr] = { v: "", t: "s" };
+        }
+        ws[subRightAddr].s = {
+          fill: { patternType: "solid", fgColor: { rgb: "FFE8F1F9" } },
+          border: { right: blk },
+        };
+
+        var paramAddr = enc({ r: rParam, c: c0 });
+        ws[paramAddr].s = {
+          font: { sz: 10, color: { rgb: "FF1A2433" }, name: "Microsoft YaHei" },
+          fill: { patternType: "solid", fgColor: { rgb: "FFF5F8FC" } },
+          alignment: { horizontal: "left", vertical: "center", wrapText: true },
+          border: { left: blk, right: blk },
+        };
+        var paramRightAddr = enc({ r: rParam, c: cEnd });
+        if (!ws[paramRightAddr]) {
+          ws[paramRightAddr] = { v: "", t: "s" };
+        }
+        ws[paramRightAddr].s = {
+          fill: { patternType: "solid", fgColor: { rgb: "FFF5F8FC" } },
+          border: { right: blk },
         };
 
         for (var hc = 0; hc < colCount; hc++) {
@@ -2564,10 +2636,17 @@
             if (out.err) {
               setFileMeta(out.err, false);
               renderPlaceholder();
+              lastResultRows = [];
+              lastExportParams = null;
               btnExport.disabled = true;
               return;
             }
             lastResultRows = out.rows;
+            lastExportParams = {
+              nominalAmount: bizParams.nominalAmount,
+              payYears: bizParams.payYears,
+              prepay: getPrepayMode(),
+            };
             var names = lastWorkbookStub && lastWorkbookStub.sheetNames;
             var extra =
               names && names.length ? "；工作表：" + names.join("、") : "";
@@ -2594,6 +2673,8 @@
             console.error(err);
             setFileMeta(err.message || String(err), false);
             renderPlaceholder();
+            lastResultRows = [];
+            lastExportParams = null;
             btnExport.disabled = true;
           })
           .then(function () {
