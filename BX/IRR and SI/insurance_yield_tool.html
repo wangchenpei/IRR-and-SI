@@ -341,6 +341,18 @@
       font-size: 0.9rem;
       color: var(--accent);
     }
+    .output-toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+    }
+    .output-toolbar .after-tax-toggle {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
     .table-wrap {
       overflow: auto;
       /* 表头约一行 + 约 27 行数据为可视上限(略收紧行高估算，避免露出到约 29 行)；不足 27 行随内容变矮 */
@@ -902,7 +914,13 @@
     <section class="pane pane-output" aria-label="输出区">
       <div class="output-toolbar">
         <h2>计算结果</h2>
-        <button type="button" id="btn-export" class="btn btn-primary" disabled>导出为 Excel</button>
+        <div class="output-toolbar-actions">
+          <label for="show-after-tax" class="field-inline-check after-tax-toggle">
+            <input type="checkbox" id="show-after-tax" />
+            <span>计算并显示纳税后结果（增值×20%）</span>
+          </label>
+          <button type="button" id="btn-export" class="btn btn-primary" disabled>导出为 Excel</button>
+        </div>
       </div>
       <div class="card" style="margin: 0; padding: 0; overflow: hidden">
         <div id="table-container" class="table-wrap">
@@ -1107,7 +1125,12 @@
       var btnRun = document.getElementById("btn-run");
       var btnClear = document.getElementById("btn-clear-file");
       var btnExport = document.getElementById("btn-export");
+      var showAfterTaxInput = document.getElementById("show-after-tax");
       var tableContainer = document.getElementById("table-container");
+
+      function isAfterTaxEnabled() {
+        return !!(showAfterTaxInput && showAfterTaxInput.checked);
+      }
 
       /** @type {File | Blob | null} */
       var currentFile = null;
@@ -1267,6 +1290,86 @@
           return null;
         }
         return totalValue / cumulativePremium;
+      }
+
+      /**
+       * 纳税额 = max(0, 总现金价值 − 截至该年累计实缴) × 20%；纳税后总现金价值 = 税前 − 纳税额。
+       */
+      function computeAfterTaxCashValue(cashValue, cumulativePremium) {
+        if (cashValue === null || !isFinite(cashValue)) return null;
+        if (cumulativePremium === null || !isFinite(cumulativePremium)) return null;
+        var gain = cashValue - cumulativePremium;
+        if (!(gain > 0)) return cashValue;
+        return cashValue - gain * 0.2;
+      }
+
+      /** 按给定总现金价值 S 计算复利/单利收益率展示串（与税前列相同口径）。 */
+      function computeYieldPctStrings(S, N, prem, payYears, prepayMode, lump) {
+        var compoundStr = "—";
+        var simpleStr = "—";
+        if (S !== null && S > 0) {
+          if (prepayMode) {
+            var xp = solvePrepayCompound(S, N, lump);
+            if (xp !== null && isFinite(xp)) {
+              compoundStr = formatYieldPctHalfUp2(xp);
+            } else {
+              compoundStr = "无法求解";
+            }
+            var yp = solvePrepaySimple(S, N, lump);
+            if (yp !== null && isFinite(yp)) {
+              simpleStr = formatYieldPctHalfUp2(yp);
+            } else {
+              simpleStr = "无法求解";
+            }
+          } else {
+            var x = solveCompoundRate(S, N, prem, payYears);
+            if (x !== null && isFinite(x)) {
+              compoundStr = formatYieldPctHalfUp2(x);
+            } else {
+              compoundStr = "无法求解";
+            }
+            var y = solveSimpleRate(S, N, prem, payYears);
+            if (y !== null && isFinite(y)) {
+              simpleStr = formatYieldPctHalfUp2(y);
+            } else {
+              simpleStr = "无法求解";
+            }
+          }
+        } else if (S !== null && S <= 0) {
+          compoundStr = "—";
+          simpleStr = "—";
+        }
+        return { compound: compoundStr, simple: simpleStr };
+      }
+
+      function computeAfterTaxYieldFields(
+        cashValue,
+        N,
+        cumulativePremium,
+        prem,
+        payYears,
+        prepayMode,
+        lump
+      ) {
+        var afterTaxCv = computeAfterTaxCashValue(cashValue, cumulativePremium);
+        var yields = computeYieldPctStrings(
+          afterTaxCv,
+          N,
+          prem,
+          payYears,
+          prepayMode,
+          lump
+        );
+        return {
+          afterTaxCashValue: afterTaxCv,
+          afterTaxCompoundPct: yields.compound,
+          afterTaxSimplePct: yields.simple,
+          afterTaxPremiumMultiple:
+            (function () {
+              var ratioAt = computePremiumMultipleRatio(afterTaxCv, cumulativePremium);
+              return ratioAt !== null && isFinite(ratioAt) ? roundHalfUp(ratioAt, 2) : null;
+            })(),
+        };
       }
 
       /**
@@ -1545,6 +1648,15 @@
             var ratioP = computePremiumMultipleRatio(Sp, cumPrepay);
             var pmP =
               ratioP !== null && isFinite(ratioP) ? roundHalfUp(ratioP, 2) : null;
+            var taxFieldsP = computeAfterTaxYieldFields(
+              Sp,
+              Np,
+              cumPrepay,
+              [],
+              bizParams.payYears,
+              true,
+              lump
+            );
             results.push({
               yearLabel: recP.yearLabel,
               yearNum: Np,
@@ -1554,6 +1666,10 @@
               valueK: recP.valueK,
               valueG: recP.valueG,
               premiumMultiple: pmP,
+              afterTaxCashValue: taxFieldsP.afterTaxCashValue,
+              afterTaxCompoundPct: taxFieldsP.afterTaxCompoundPct,
+              afterTaxSimplePct: taxFieldsP.afterTaxSimplePct,
+              afterTaxPremiumMultiple: taxFieldsP.afterTaxPremiumMultiple,
             });
           }
           return { rows: results, err: null, prepayLumpPremium: lump };
@@ -1599,6 +1715,15 @@
           var ratioM = computePremiumMultipleRatio(S, cumAnnual);
           var pm =
             ratioM !== null && isFinite(ratioM) ? roundHalfUp(ratioM, 2) : null;
+          var taxFields = computeAfterTaxYieldFields(
+            S,
+            N,
+            cumAnnual,
+            prem,
+            bizParams.payYears,
+            false,
+            0
+          );
           results.push({
             yearLabel: rec.yearLabel,
             yearNum: N,
@@ -1608,6 +1733,10 @@
             valueK: rec.valueK,
             valueG: rec.valueG,
             premiumMultiple: pm,
+            afterTaxCashValue: taxFields.afterTaxCashValue,
+            afterTaxCompoundPct: taxFields.afterTaxCompoundPct,
+            afterTaxSimplePct: taxFields.afterTaxSimplePct,
+            afterTaxPremiumMultiple: taxFields.afterTaxPremiumMultiple,
           });
         }
         return { rows: results, err: null };
@@ -2212,13 +2341,38 @@
         table.setAttribute("role", "grid");
         var thead = document.createElement("thead");
         var withdraw = getPremiumMode() === "withdraw";
+        var showAfterTax = isAfterTaxEnabled();
+        var headCells = ["保单年度"];
         if (withdraw) {
-          thead.innerHTML =
-            '<tr><th>保单年度</th><th>累计提取总额</th><th>提取后剩余价值</th><th>复利收益率</th><th>单利收益率</th><th title="现价÷累计实缴；仅显示&gt;1 的倍数，整数档较上一有效行变大时显示两位小数，否则为 -">获利倍数</th></tr>';
+          headCells.push("累计提取总额", "提取后剩余价值");
         } else {
-          thead.innerHTML =
-            '<tr><th>保单年度</th><th>预期保单现价</th><th>复利收益率</th><th>单利收益率</th><th title="现价÷累计实缴；仅显示&gt;1 的倍数，整数档较上一有效行变大时显示两位小数，否则为 -">获利倍数</th></tr>';
+          headCells.push("预期保单现价");
         }
+        headCells.push("复利收益率", "单利收益率");
+        if (showAfterTax) {
+          headCells.push(
+            "纳税后总现金价值",
+            "纳税后复利收益率",
+            "纳税后单利收益率"
+          );
+        }
+        headCells.push("获利倍数");
+        if (showAfterTax) {
+          headCells.push("纳税后获利倍数");
+        }
+        var gainMultTitle =
+          "现价÷累计实缴；仅显示&gt;1 的倍数，整数档较上一有效行变大时显示两位小数，否则为 -";
+        var headHtml = "<tr>";
+        for (var hi = 0; hi < headCells.length; hi++) {
+          var label = headCells[hi];
+          if (label === "获利倍数" || label === "纳税后获利倍数") {
+            headHtml += '<th title="' + gainMultTitle + '">' + label + "</th>";
+          } else {
+            headHtml += "<th>" + label + "</th>";
+          }
+        }
+        headHtml += "</tr>";
+        thead.innerHTML = headHtml;
         var tbody = document.createElement("tbody");
         for (var ri = 0; ri < rows.length; ri++) {
           var r = rows[ri];
@@ -2230,35 +2384,45 @@
               ? rows[ri - 1].premiumMultiple
               : null;
           var multTxt = escapeHtml(formatGainMultipleCell(r.premiumMultiple, prevPm));
+          var prevAtPm =
+            ri > 0 &&
+            rows[ri - 1].afterTaxPremiumMultiple !== null &&
+            isFinite(rows[ri - 1].afterTaxPremiumMultiple)
+              ? rows[ri - 1].afterTaxPremiumMultiple
+              : null;
+          var atMultTxt = escapeHtml(
+            formatGainMultipleCell(r.afterTaxPremiumMultiple, prevAtPm)
+          );
+          var cells = [escapeHtml(r.yearLabel)];
           if (withdraw) {
-            tr.innerHTML =
-              "<td>" +
-              escapeHtml(r.yearLabel) +
-              "</td><td>" +
-              escapeHtml(formatMoneyCell(r.valueG, true)) +
-              "</td><td>" +
-              escapeHtml(formatMoneyCell(r.valueK, true)) +
-              "</td><td>" +
-              escapeHtml(r.compoundPct) +
-              "</td><td>" +
-              escapeHtml(r.simplePct) +
-              '</td><td class="premium-mult-cell">' +
-              multTxt +
-              "</td>";
+            cells.push(
+              escapeHtml(formatMoneyCell(r.valueG, true)),
+              escapeHtml(formatMoneyCell(r.valueK, true))
+            );
           } else {
-            tr.innerHTML =
-              "<td>" +
-              escapeHtml(r.yearLabel) +
-              "</td><td>" +
-              escapeHtml(formatMoneyCell(r.cashValue, true)) +
-              "</td><td>" +
-              escapeHtml(r.compoundPct) +
-              "</td><td>" +
-              escapeHtml(r.simplePct) +
-              '</td><td class="premium-mult-cell">' +
-              multTxt +
-              "</td>";
+            cells.push(escapeHtml(formatMoneyCell(r.cashValue, true)));
           }
+          cells.push(escapeHtml(r.compoundPct), escapeHtml(r.simplePct));
+          if (showAfterTax) {
+            cells.push(
+              escapeHtml(formatMoneyCell(r.afterTaxCashValue, true)),
+              escapeHtml(r.afterTaxCompoundPct || "—"),
+              escapeHtml(r.afterTaxSimplePct || "—")
+            );
+          }
+          cells.push(multTxt);
+          if (showAfterTax) {
+            cells.push(atMultTxt);
+          }
+          var rowHtml = "";
+          for (var ci = 0; ci < cells.length; ci++) {
+            var isGainCol =
+              ci === cells.length - 1 ||
+              (showAfterTax && ci === cells.length - 2);
+            var cls = isGainCol ? ' class="premium-mult-cell"' : "";
+            rowHtml += "<td" + cls + ">" + cells[ci] + "</td>";
+          }
+          tr.innerHTML = rowHtml;
           tbody.appendChild(tr);
         }
         table.appendChild(thead);
@@ -2271,14 +2435,35 @@
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
       /**
-       * 构建导出工作表：自 C4 起；不提取为 C–G 五列(末列为获利倍数)，提取为 C–H 六列。第 5 行整行合并；最后一行各格同画底边。
-       * @param {{ yearLabel: string, yearNum: number, cashValue: number|null, compoundPct: string, simplePct: string, valueK?: number|null, valueG?: number|null, premiumMultiple?: number|null }[]} rows
+       * 构建导出工作表：自 C4 起；列数随「提取/不提取」及是否勾选纳税后结果变化。第 5 行整行合并；最后一行各格同画底边。
        */
       function buildStyledYieldSheet(rows) {
         var enc = XLSX.utils.encode_cell;
         var c0 = 2;
         var isWithdrawExport = getPremiumMode() === "withdraw";
-        var colCount = isWithdrawExport ? 6 : 5;
+        var showAfterTax = isAfterTaxEnabled();
+        var hdrs = ["保单年度"];
+        if (isWithdrawExport) {
+          hdrs.push("累计提取总额", "提取后剩余价值");
+        } else {
+          hdrs.push("预期保单现价");
+        }
+        hdrs.push("复利收益率", "单利收益率");
+        if (showAfterTax) {
+          hdrs.push(
+            "纳税后总现金价值",
+            "纳税后复利收益率",
+            "纳税后单利收益率"
+          );
+        }
+        hdrs.push("获利倍数");
+        if (showAfterTax) {
+          hdrs.push("纳税后获利倍数");
+        }
+        var colCount = hdrs.length;
+        var atGainColIdx = showAfterTax ? colCount - 1 : -1;
+        var gainColIdx = showAfterTax ? colCount - 2 : colCount - 1;
+        var atCashColIdx = showAfterTax ? gainColIdx - 3 : -1;
         var cEnd = c0 + colCount - 1;
         var blk = { style: "thin", color: { rgb: "FF1A1A1A" } };
         var grayH = { style: "thin", color: { rgb: "FFE0E8F0" } };
@@ -2302,6 +2487,21 @@
           return addr;
         }
 
+        function writeGainCellValue(rr, col, pm, prevGain) {
+          var gainStr = formatGainMultipleCell(pm, prevGain);
+          if (gainStr === "-") {
+            setCell(rr, col, "-", "s");
+          } else if (pm !== null && isFinite(pm)) {
+            setCell(rr, col, pm, "n");
+          } else {
+            setCell(rr, col, "", "s");
+          }
+        }
+
+        function writeGainCell(rr, col, rec, prevGain) {
+          writeGainCellValue(rr, col, rec.premiumMultiple, prevGain);
+        }
+
         setCell(rTitle, c0, EXPORT_TOOL_TITLE, "s");
         merges.push({ s: { r: rTitle, c: c0 }, e: { r: rTitle, c: cEnd } });
 
@@ -2310,16 +2510,6 @@
         setCell(rSub, c0, subText, "s");
         merges.push({ s: { r: rSub, c: c0 }, e: { r: rSub, c: cEnd } });
 
-        var hdrs = isWithdrawExport
-          ? [
-              "保单年度",
-              "累计提取总额",
-              "提取后剩余价值",
-              "复利收益率",
-              "单利收益率",
-              "获利倍数",
-            ]
-          : ["保单年度", "预期保单现价", "复利收益率", "单利收益率", "获利倍数"];
         for (var h = 0; h < colCount; h++) {
           setCell(rHead, c0 + h, hdrs[h], "s");
         }
@@ -2327,9 +2517,10 @@
         for (var ir = 0; ir < rows.length; ir++) {
           var rr = rData0 + ir;
           var rec = rows[ir];
+          var col = 0;
           setCell(
             rr,
-            c0 + 0,
+            c0 + col++,
             rec.yearLabel != null && rec.yearLabel !== "" ? String(rec.yearLabel) : "",
             "s"
           );
@@ -2348,60 +2539,60 @@
                 : "";
             setCell(
               rr,
-              c0 + 1,
+              c0 + col++,
               vg === "" ? "" : vg,
               typeof vg === "number" ? "n" : "s"
             );
             setCell(
               rr,
-              c0 + 2,
+              c0 + col++,
               vk === "" ? "" : vk,
               typeof vk === "number" ? "n" : "s"
             );
-            setCell(rr, c0 + 3, rec.compoundPct || "", "s");
-            setCell(rr, c0 + 4, rec.simplePct || "", "s");
-            var prevGainW =
-              ir > 0 &&
-              rows[ir - 1].premiumMultiple != null &&
-              isFinite(rows[ir - 1].premiumMultiple)
-                ? rows[ir - 1].premiumMultiple
-                : null;
-            var gainStrW = formatGainMultipleCell(rec.premiumMultiple, prevGainW);
-            if (gainStrW === "-") {
-              setCell(rr, c0 + 5, "-", "s");
-            } else if (
-              rec.premiumMultiple !== null &&
-              isFinite(rec.premiumMultiple)
-            ) {
-              setCell(rr, c0 + 5, rec.premiumMultiple, "n");
-            } else {
-              setCell(rr, c0 + 5, "", "s");
-            }
           } else {
             var cv =
               rec.cashValue !== null && isFinite(rec.cashValue) ? rec.cashValue : "";
-            var tCash =
-              typeof cv === "number" && isFinite(cv) ? "n" : "s";
-            setCell(rr, c0 + 1, cv === "" ? "" : cv, tCash);
-            setCell(rr, c0 + 2, rec.compoundPct || "", "s");
-            setCell(rr, c0 + 3, rec.simplePct || "", "s");
-            var prevGainN =
+            var tCash = typeof cv === "number" && isFinite(cv) ? "n" : "s";
+            setCell(rr, c0 + col++, cv === "" ? "" : cv, tCash);
+          }
+          setCell(rr, c0 + col++, rec.compoundPct || "", "s");
+          setCell(rr, c0 + col++, rec.simplePct || "", "s");
+          if (showAfterTax) {
+            var atcv =
+              rec.afterTaxCashValue !== null &&
+              rec.afterTaxCashValue !== undefined &&
+              isFinite(rec.afterTaxCashValue)
+                ? rec.afterTaxCashValue
+                : "";
+            setCell(
+              rr,
+              c0 + col++,
+              atcv === "" ? "" : atcv,
+              typeof atcv === "number" ? "n" : "s"
+            );
+            setCell(rr, c0 + col++, rec.afterTaxCompoundPct || "", "s");
+            setCell(rr, c0 + col++, rec.afterTaxSimplePct || "", "s");
+          }
+          var prevGain =
+            ir > 0 &&
+            rows[ir - 1].premiumMultiple != null &&
+            isFinite(rows[ir - 1].premiumMultiple)
+              ? rows[ir - 1].premiumMultiple
+              : null;
+          writeGainCell(rr, c0 + col++, rec, prevGain);
+          if (showAfterTax) {
+            var prevAtGain =
               ir > 0 &&
-              rows[ir - 1].premiumMultiple != null &&
-              isFinite(rows[ir - 1].premiumMultiple)
-                ? rows[ir - 1].premiumMultiple
+              rows[ir - 1].afterTaxPremiumMultiple != null &&
+              isFinite(rows[ir - 1].afterTaxPremiumMultiple)
+                ? rows[ir - 1].afterTaxPremiumMultiple
                 : null;
-            var gainStrN = formatGainMultipleCell(rec.premiumMultiple, prevGainN);
-            if (gainStrN === "-") {
-              setCell(rr, c0 + 4, "-", "s");
-            } else if (
-              rec.premiumMultiple !== null &&
-              isFinite(rec.premiumMultiple)
-            ) {
-              setCell(rr, c0 + 4, rec.premiumMultiple, "n");
-            } else {
-              setCell(rr, c0 + 4, "", "s");
-            }
+            writeGainCellValue(
+              rr,
+              c0 + col,
+              rec.afterTaxPremiumMultiple,
+              prevAtGain
+            );
           }
         }
 
@@ -2412,16 +2603,23 @@
         });
         ws["!cols"] = [{ wch: 3 }, { wch: 3 }];
         if (isWithdrawExport) {
-          ws["!cols"].push(
-            { wch: 13 },
-            { wch: 13 },
-            { wch: 13 },
-            { wch: 12 },
-            { wch: 12 },
-            { wch: 8 }
-          );
+          ws["!cols"].push({ wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 12 }, { wch: 12 });
+          if (showAfterTax) {
+            ws["!cols"].push({ wch: 14 }, { wch: 12 }, { wch: 12 });
+          }
+          ws["!cols"].push({ wch: 8 });
+          if (showAfterTax) {
+            ws["!cols"].push({ wch: 8 });
+          }
         } else {
-          ws["!cols"].push({ wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 8 });
+          ws["!cols"].push({ wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 12 });
+          if (showAfterTax) {
+            ws["!cols"].push({ wch: 14 }, { wch: 12 }, { wch: 12 });
+          }
+          ws["!cols"].push({ wch: 8 });
+          if (showAfterTax) {
+            ws["!cols"].push({ wch: 8 });
+          }
         }
         ws["!rows"] = [];
         for (var ri = 0; ri <= lastDataR; ri++) {
@@ -2475,6 +2673,13 @@
           };
         }
 
+        function isExportMoneyColumn(bc) {
+          if (isWithdrawExport) {
+            return bc === 1 || bc === 2 || (showAfterTax && bc === atCashColIdx);
+          }
+          return bc === 1 || (showAfterTax && bc === atCashColIdx);
+        }
+
         for (var dr = 0; dr < rows.length; dr++) {
           var rr = rData0 + dr;
           var zebraFill =
@@ -2500,25 +2705,15 @@
             var hAlign = "center";
             if (bc === 0) {
               hAlign = "left";
-            } else if (isWithdrawExport) {
-              if (bc === 1 || bc === 2) {
-                hAlign = "center";
-              } else if (bc === colCount - 1) {
-                hAlign = "center";
-              } else {
-                hAlign = "right";
-              }
+            } else if (bc === gainColIdx || bc === atGainColIdx) {
+              hAlign = "center";
+            } else if (isExportMoneyColumn(bc)) {
+              hAlign = "center";
             } else {
-              if (bc === 1) {
-                hAlign = "center";
-              } else if (bc === colCount - 1) {
-                hAlign = "center";
-              } else {
-                hAlign = "right";
-              }
+              hAlign = "right";
             }
             var cellFont =
-              bc === colCount - 1
+              bc === gainColIdx || bc === atGainColIdx
                 ? {
                     sz: 10,
                     name: "Microsoft YaHei",
@@ -2536,15 +2731,9 @@
               },
               border: bdr,
             };
-            if (isWithdrawExport) {
-              if ((bc === 1 || bc === 2) && isNum) {
-                cellStyle.numFmt = "#,##0";
-              } else if (bc === colCount - 1 && isNum) {
-                cellStyle.numFmt = "0.00";
-              }
-            } else if (bc === 1 && isNum) {
+            if (isExportMoneyColumn(bc) && isNum) {
               cellStyle.numFmt = "#,##0";
-            } else if (bc === colCount - 1 && isNum) {
+            } else if ((bc === gainColIdx || bc === atGainColIdx) && isNum) {
               cellStyle.numFmt = "0.00";
             }
             ws[addr].s = cellStyle;
@@ -2609,6 +2798,14 @@
         var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
         XLSX.writeFile(wb, "保险演示收益率_" + stamp + ".xlsx");
       });
+
+      if (showAfterTaxInput) {
+        showAfterTaxInput.addEventListener("change", function () {
+          if (lastResultRows.length) {
+            renderTable(lastResultRows);
+          }
+        });
+      }
 
       updateRunButtonState();
     })();
