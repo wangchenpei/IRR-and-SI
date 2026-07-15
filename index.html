@@ -881,7 +881,7 @@
 
         <h2>保单演示文件</h2>
         <p class="file-schema-note">
-          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。仅支持 .xlsx / .xls。
+          表内需含：A 列保单年度(如「1年」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。仅支持 .xlsx / .xls。
         </p>
         <input id="file-input" type="file" accept=".xlsx,.xls" />
         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
@@ -917,7 +917,7 @@
         <div class="output-toolbar-actions">
           <label for="show-after-tax" class="field-inline-check after-tax-toggle">
             <input type="checkbox" id="show-after-tax" />
-            <span>计算并显示纳税后结果（增值×20%）</span>
+            <span>计算若纳税后结果（增值×20%）</span>
           </label>
           <button type="button" id="btn-export" class="btn btn-primary" disabled>导出为 Excel</button>
         </div>
@@ -1293,7 +1293,7 @@
       }
 
       /**
-       * 纳税额 = max(0, 总现金价值 − 截至该年累计实缴) × 20%；纳税后总现金价值 = 税前 − 纳税额。
+       * 纳税额 = max(0, 总现金价值 − 截至该年累计实缴) × 20%；若纳税后总现金价值 = 税前 − 纳税额。
        */
       function computeAfterTaxCashValue(cashValue, cumulativePremium) {
         if (cashValue === null || !isFinite(cashValue)) return null;
@@ -2351,21 +2351,21 @@
         headCells.push("复利收益率", "单利收益率");
         if (showAfterTax) {
           headCells.push(
-            "纳税后总现金价值",
-            "纳税后复利收益率",
-            "纳税后单利收益率"
+            "若纳税后总现金价值",
+            "若纳税后复利收益率",
+            "若纳税后单利收益率"
           );
         }
         headCells.push("获利倍数");
         if (showAfterTax) {
-          headCells.push("纳税后获利倍数");
+          headCells.push("若纳税后获利倍数");
         }
         var gainMultTitle =
           "现价÷累计实缴；仅显示&gt;1 的倍数，整数档较上一有效行变大时显示两位小数，否则为 -";
         var headHtml = "<tr>";
         for (var hi = 0; hi < headCells.length; hi++) {
           var label = headCells[hi];
-          if (label === "获利倍数" || label === "纳税后获利倍数") {
+          if (label === "获利倍数" || label === "若纳税后获利倍数") {
             headHtml += '<th title="' + gainMultTitle + '">' + label + "</th>";
           } else {
             headHtml += "<th>" + label + "</th>";
@@ -2435,7 +2435,7 @@
       var EXPORT_AUTHOR_NAME = "Alpha Wang";
 
       /**
-       * 构建导出工作表：自 C4 起；列数随「提取/不提取」及是否勾选纳税后结果变化。第 5 行整行合并；最后一行各格同画底边。
+       * 构建导出工作表：自 C4 起；列数随「提取/不提取」及是否勾选若纳税后结果变化。第 5 行整行合并；最后一行各格同画底边。
        */
       function buildStyledYieldSheet(rows) {
         var enc = XLSX.utils.encode_cell;
@@ -2451,14 +2451,14 @@
         hdrs.push("复利收益率", "单利收益率");
         if (showAfterTax) {
           hdrs.push(
-            "纳税后总现金价值",
-            "纳税后复利收益率",
-            "纳税后单利收益率"
+            "若纳税后总现金价值",
+            "若纳税后复利收益率",
+            "若纳税后单利收益率"
           );
         }
         hdrs.push("获利倍数");
         if (showAfterTax) {
-          hdrs.push("纳税后获利倍数");
+          hdrs.push("若纳税后获利倍数");
         }
         var colCount = hdrs.length;
         var atGainColIdx = showAfterTax ? colCount - 1 : -1;
