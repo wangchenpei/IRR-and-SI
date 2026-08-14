@@ -869,7 +869,7 @@
 
         <h2>保单演示文件</h2>
         <p class="file-schema-note">
-          表内需含：A 列保单年度(如「1年/1岁」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。仅支持 .xlsx / .xls。
+          表内需含：A 列保单年度(如「1」「1年/1岁」「第1保单年度」)。不提取时读 E 列预期保单现价；提取时现价 = G 列(累计提取总额) + K 列(提取后剩余价值)。仅支持 .xlsx / .xls。
         </p>
         <input id="file-input" type="file" accept=".xlsx,.xls" />
         <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="上传演示表">
@@ -1192,13 +1192,17 @@
         return wb.Sheets[names[0]];
       }
 
-      /** A 列：如「1年/1岁」→ 保单年度数字 */
+      /** A 列：如「1」「1年/1岁」「第1保单年度」→ 保单年度数字 */
       function parsePolicyYearFromA(aVal) {
         if (aVal === null || aVal === undefined) return null;
+        if (typeof aVal === "number" && isFinite(aVal)) {
+          var numericYear = Math.floor(aVal);
+          return numericYear === aVal && numericYear > 0 ? numericYear : null;
+        }
         var s = String(aVal).trim();
         if (!s.length || s.length > 40) return null;
         if (s.indexOf("|") !== -1) return null;
-        var m = s.match(/^(\d+)\s*年(?:\s*[/／]|\s*$)/);
+        var m = s.match(/(\d+)/);
         if (!m) return null;
         var n = parseInt(m[1], 10);
         return Number.isFinite(n) && n > 0 ? n : null;
@@ -1443,7 +1447,7 @@
               S = partK + partG;
             }
             out.push({
-              yearLabel: String(row[0]).trim(),
+              yearLabel: String(row[0]),
               yearNum: N,
               cashValue: S,
               valueK: vK,
@@ -1452,7 +1456,7 @@
           } else {
             S = parseCashValueCell(row[4]);
             out.push({
-              yearLabel: String(row[0]).trim(),
+              yearLabel: String(row[0]),
               yearNum: N,
               cashValue: S,
             });
@@ -1486,7 +1490,7 @@
         if (!ext.rows.length) {
           return {
             rows: [],
-            err: "未从 A 列解析到保单年度(需形如「1年/1岁」)。请检查表格式。",
+            err: "未从 A 列解析到保单年度(可为「1」「1年/1岁」「第1保单年度」等格式)。请检查表格式。",
           };
         }
 
